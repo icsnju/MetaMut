@@ -1,0 +1,11 @@
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - README.md
+  - README.ubuntu.md
+  - bugs.md
+
+theme: jekyll-theme-tactile
