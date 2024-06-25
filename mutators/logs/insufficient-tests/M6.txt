@@ -1,0 +1,432 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+AddRandomGotoStmt: Insert a new GotoStmt at a random position within a CompoundStmt excluding the last statement
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DecayRandomArrayToPointer: Decay a randomly selected array variable to a pointer variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+IncreasePointerLevel: Increase the pointer level of a variable.
+
+InlineFunctionCall: Inline a function call with its body.
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+SwitchInitExpr: Switch initialization expressions of two VarDecls.
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:14.626350
+```
+ReplaceReturnWithGlobal: This mutator finds a function's return statement and replaces the return expression with a global variable of the same type.
+```
+Q>>>>>>>>0:00:14.627724
+Assist me in identifying test cases that can effectively apply the mutator named ReplaceReturnWithGlobal.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:00:54.779606
+Sure, here are a few test cases that can be used for the `ReplaceReturnWithGlobal` mutator:
+
+**Test Case 1: Basic Function**
+
+This test case is a simple function that returns an integer value. After mutation, the return statement should be replaced with a global variable.
+
+```c
+#include <stdio.h>
+
+int global = 5;
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    printf("%d\n", add(4, 5));
+    return 0;
+}
+```
+
+**Test Case 2: Function with Multiple Return Statements**
+
+In this test case, the function has multiple return statements. The mutator should replace all return expressions with the global variable.
+
+```c
+#include <stdio.h>
+
+int global = 10;
+
+int checkNumber(int num) {
+    if (num < 0) {
+        return -1;
+    } else if (num == 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int main() {
+    printf("%d\n", checkNumber(-5));
+    printf("%d\n", checkNumber(0));
+    printf("%d\n", checkNumber(5));
+    return 0;
+}
+```
+
+**Test Case 3: Function with Different Return Types**
+
+This test case includes functions with different return types. The mutator should replace the return expressions with global variables of the corresponding types.
+
+```c
+#include <stdio.h>
+
+int global_int = 7;
+double global_double = 3.14;
+
+int getNumber() {
+    return 5;
+}
+
+double getPi() {
+    return 3.14159;
+}
+
+int main() {
+    printf("%d\n", getNumber());
+    printf("%f\n", getPi());
+    return 0;
+}
+```
+
+In all test cases, the mutator should replace the return expressions with the global variables, altering the output of the programs.
+Q>>>>>>>>0:00:54.785929
+Assist me in implementing the mutator named ReplaceReturnWithGlobal. Below is the description of its functionality:
+This mutator finds a function's return statement and replaces the return expression with a global variable of the same type.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:31.877714
+Here is an implementation for the `ReplaceReturnWithGlobal` mutator:
+
+```cpp
+// ReplaceReturnWithGlobal.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ReplaceReturnWithGlobal
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ReplaceReturnWithGlobal> {
+
+public:
+  using Mutator::Mutator;
+
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheReturns.empty() || TheGlobals.empty()) return false;
+
+    ReturnStmt *returnStmt = randElement(TheReturns);
+    VarDecl *globalVar = randElement(TheGlobals);
+
+    // Replace the return expression with the global variable
+    getRewriter().ReplaceText(
+        returnStmt->getRetValue()->getSourceRange(), globalVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitReturnStmt(ReturnStmt *RS) {
+    TheReturns.push_back(RS);
+    return true;
+  }
+
+  bool VisitVarDecl(VarDecl *VD) {
+    if (VD->isFileVarDecl() && !VD->isStaticDataMember()) {
+      TheGlobals.push_back(VD);
+    }
+    return true;
+  }
+
+private:
+  std::vector<ReturnStmt *> TheReturns;
+  std::vector<VarDecl *> TheGlobals;
+};
+
+static RegisterMutator<ReplaceReturnWithGlobal> M(
+    "ReplaceReturnWithGlobal", "Replace a function's return expression with a global variable.");
+```
+
+This mutator works by visiting all return statements and global variable declarations in the AST. In the `mutate()` method, it randomly selects a return statement and a global variable, and then uses `Rewriter` to replace the return expression with the global variable. Note that we only consider global variables that are not static data members.

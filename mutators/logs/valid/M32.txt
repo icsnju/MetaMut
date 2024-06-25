@@ -1,0 +1,661 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+AddRandomGotoStmt: Insert a new GotoStmt at a random position within a CompoundStmt excluding the last statement
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+ChangeRandomPointerInitialization: Randomly selects a PointerType variable initialization and changes its initialized value to another compatible pointer variable or null.
+
+CompoundStmtGrouping: Group consecutive statements within a CompoundStmt.
+
+ConvertIfToSwitch: Converts simple if-else-if ladders into a switch-case construct
+
+DecayRandomArrayToPointer: Decay a randomly selected array variable to a pointer variable.
+
+DecayRandomFunctionToPointer: Decays random functions to pointers and adjusts call sites accordingly.
+
+DecayRandomPointerToArray: Change a pointer declaration to an array declaration.
+
+DecayRandomStructToUnion: Randomly select a struct declaration and convert it into a union
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+DuplicateRandomUnaryOperator: Duplicate randomly selected UnaryOperator.
+
+EmbedCompoundStmt: Embed a CompoundStmt inside another CompoundStmt
+
+FlipLogicalOperator: Flip the logical operator in a LogicalExpr.
+
+IncreasePointerLevel: Increase the pointer level of a variable.
+
+InlineFunctionCall: Inline a function call with its body.
+
+InlineRandomVarDecl: Inline a random VarDecl's initializer and remove the declaration.
+
+InsertRandomArrayIndexMutation: Mutate an array index randomly.
+
+InsertRandomBreakStmt: Randomly inserts a break statement in a loop body.
+
+InsertRandomFunctionCall: Insert a random function call in a CompoundStmt.
+
+InsertRandomReturnStmt: Insert a return statement at a random position in a function
+
+InsertRandomTypeConversion: Insert a random type conversion to a compatible type.
+
+InsertRandomUnaryOperator: Insert a unary operator before a literal.
+
+InterchangeFuncCalls: Interchange positions of two function calls within a CompoundStmt
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+InvertFunctionCondition: Inverts the condition of a boolean function.
+
+InvertRelationalOperator: Invert the relational operator in a BinaryOperator
+
+LiftNestedFunction: Lifts a function call to the outer level and replaces the original location with a new variable.
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+ModifyRandomFieldOfStruct: Randomly selects a FieldDecl within a RecordDecl (Struct or Union), and changes its type to another compatible type from the existing types in the program.
+
+ModifyRandomFieldOfStructMutator: This mutator modifies a random field of a struct.
+
+MutateFunctionReturnType: Change return type of a non-void function to double and modify return statements.
+
+MutateLoopBounds: Modify the loop control variable's initialization, condition, or increment/decrement statement.
+
+MutatePointerTypeToDifferentType: Change pointer's pointed-to type.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+RandomizeCaseStmts: Randomly shuffles the order of CaseStmts in a SwitchStmt
+
+RandomizeFunctionOrder: Randomly swap two function definitions in a program.
+
+RandomizeIfElseBranches: Randomly selects an IfStmt, inverts the condition, and swaps the then and else branches.
+
+RemoveRandomParameter: Randomly remove a non-essential parameter from a function declaration and adjust all call sites accordingly.
+
+ReplaceBinaryOperatorWithEquivalent: Replace binary operator with an equivalent operation.
+
+ReplaceFunctionCallWithConstant: Replace a function call with a constant value.
+
+ReplaceLiteralWithConstant: Replace a literal with a global constant.
+
+ReplaceRandomExprWithNullptr: Replace a random pointer expression with NULL.
+
+ReplaceRandomIntWithCharLiteral: Randomly replace an integer literal with a character literal from the ASCII range 0-127.
+
+ReplaceReturnWithGlobal: Replace a function's return expression with a global variable.
+
+ReplaceWhileWithDoWhile: Replace a WhileStmt with a DoWhileStmt, retaining the condition and body.
+
+ReplaceWithEquivalentUnaryExpr: Replace UnaryExpr with an equivalent UnaryExpr that uses a different operator.
+
+ShiftFunctionParams: Shift the position of all parameters one place to the right.
+
+SplitCompoundStmt: Randomly split a CompoundStmt into two nested CompoundStmts.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+SwapNestedFunctionCalls: Swap the positions of two nested function calls.
+
+SwapNestedIfElse: Swap a nested if-else statement and inverse the condition.
+
+SwapNestedLoops: Swap the bodies of inner and outer loop.
+
+SwapRandomBinaryOperands: Swap operands of a random BinaryOperator's expression.
+
+SwapRandomUnaryOperands: Swap operands of a random UnaryOperator's BinaryOperator sub-expression.
+
+SwitchInitExpr: Switch initialization expressions of two VarDecls.
+
+ToggleLoopType: Toggle between `for` and `while` loop types.
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+ToggleStaticVarDecl: Toggle static and non-static for VarDecl
+
+ToggleVarDeclInitialization: Toggle variable declaration initialization.
+
+WrapStmtInIf: Wrap a random non-control-flow statement with an if-statement with a random boolean condition.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:13.157051
+```
+ModifyRandomEnum: This mutator randomly selects an EnumDecl and changes the value of one of its EnumConstantDecls to a different integer value.
+```
+Q>>>>>>>>0:00:13.159558
+Assist me in identifying test cases that can effectively apply the mutator named ModifyRandomEnum.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Please use only C features
+A<<<<<<<<0:00:45.058073
+Here are some test cases that can effectively apply the `ModifyRandomEnum` mutator.
+
+Test Case 1:
+This test case has a single enumeration. The mutator can select any of the constants and change its value.
+
+```c
+#include <stdio.h>
+
+enum Weekday {
+    Monday = 1,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+};
+
+int main() {
+    enum Weekday day = Monday;
+    printf("%d\n", day);
+    return 0;
+}
+```
+
+Test Case 2:
+In this case, the program uses two different enumerations. The mutator can select any enumeration and any constant there.
+
+```c
+#include <stdio.h>
+
+enum Colors {
+    Red = 1,
+    Green,
+    Blue,
+    Yellow
+};
+
+enum Shapes {
+    Square = 1,
+    Circle,
+    Triangle,
+    Rectangle
+};
+
+int main() {
+    enum Colors color = Green;
+    printf("%d\n", color);
+    enum Shapes shape = Triangle;
+    printf("%d\n", shape);
+    return 0;
+}
+```
+
+Test Case 3:
+This test case has a single enumeration with non-sequential values. The mutator can change any of the constants' values.
+
+```c
+#include <stdio.h>
+
+enum Status {
+    Success = 200,
+    BadRequest = 400,
+    Unauthorized = 401,
+    NotFound = 404,
+    InternalServerError = 500
+};
+
+int main() {
+    enum Status status = Success;
+    printf("%d\n", status);
+    return 0;
+}
+```
+Q>>>>>>>>0:00:45.235642
+Assist me in implementing the mutator named ModifyRandomEnum. Below is the description of its functionality:
+This mutator randomly selects an EnumDecl and changes the value of one of its EnumConstantDecls to a different integer value.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* getSourceText(const NodeType *node).str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName), note that this only generate a identifier for you, you should insert declaration to corresponding CompStmt by yourself
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:36.713539
+Below is the implementation for the mutator named `ModifyRandomEnum`.
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ModifyRandomEnum : public Mutator,
+                         public clang::RecursiveASTVisitor<ModifyRandomEnum> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ModifyRandomEnum>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    // Traverse the AST to find EnumDecls and EnumConstantDecls
+    TraverseAST(getASTContext());
+    
+    if (TheEnums.empty()) return false;
+    
+    // Pick a random EnumDecl
+    EnumDecl *enumDecl = randElement(TheEnums);
+
+    // Get the list of constants for this EnumDecl
+    auto constants = enumDecl->enumerators();
+
+    if (constants.empty()) return false;
+
+    // Pick a random constant
+    EnumConstantDecl *constant = randElement(constants);
+
+    // Generate a new value for the constant
+    int newValue = getManager().getRandomGenerator()(); // get a random int
+
+    // Replace the old value with the new one
+    getRewriter().ReplaceText(constant->getSourceRange(),
+                              constant->getNameAsString() + " = " + std::to_string(newValue));
+
+    return true;
+  }
+
+  bool VisitEnumDecl(clang::EnumDecl *ED) {
+    TheEnums.push_back(ED);
+    return true;
+  }
+
+private:
+  std::vector<clang::EnumDecl *> TheEnums;
+};
+
+static RegisterMutator<ModifyRandomEnum> M(
+    "ModifyRandomEnum", "Randomly select an EnumDecl and change the value of one of its EnumConstantDecls to a different integer value.");
+```
+
+This implementation first traverses the Abstract Syntax Tree (AST) to find all enumeration declarations (`EnumDecl`). It then randomly selects one of these declarations and its constants (`EnumConstantDecl`). A new integer value is generated for the selected constant, and the existing value is replaced with this new value.
+
+This implementation uses the `RecursiveASTVisitor` to visit all `EnumDecl` nodes in the AST. It stores each `EnumDecl` node it visits in a vector `TheEnums`. The `mutate()` function then selects a random `EnumDecl` and `EnumConstantDecl` from `TheEnums` and modifies its value.
+Q>>>>>>>>0:01:49.003428
+Based on the results of your ModifyRandomEnum implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+In file included from MetaMut/lib/mutators/ModifyRandomEnum.cpp:6:
+MetaMut/include/Mutator.h: In instantiation of ‘auto& ysmut::Mutator::randElement(Container&) [with Container = llvm::iterator_range<clang::DeclContext::specific_decl_iterator<clang::EnumConstantDecl> >]’:
+MetaMut/lib/mutators/ModifyRandomEnum.cpp:34:45:   required from here
+MetaMut/include/Mutator.h:158:42: error: ‘class llvm::iterator_range<clang::DeclContext::specific_decl_iterator<clang::EnumConstantDecl> >’ has no member named ‘size’
+  158 |     return container[randIndex(container.size())];
+      |                                ~~~~~~~~~~^~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:524: CMakeFiles/MetaMut.dir/lib/mutators/ModifyRandomEnum.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:41.851412
+The compilation error indicates that the `llvm::iterator_range<clang::DeclContext::specific_decl_iterator<clang::EnumConstantDecl>>` doesn't have a `size` member. This is used when trying to select a random element from the container. We can convert the range to a vector to calculate the size and access elements by index:
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ModifyRandomEnum : public Mutator,
+                         public clang::RecursiveASTVisitor<ModifyRandomEnum> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ModifyRandomEnum>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    // Traverse the AST to find EnumDecls and EnumConstantDecls
+    TraverseAST(getASTContext());
+    
+    if (TheEnums.empty()) return false;
+    
+    // Pick a random EnumDecl
+    EnumDecl *enumDecl = randElement(TheEnums);
+
+    // Get the list of constants for this EnumDecl
+    auto constantsRange = enumDecl->enumerators();
+
+    // Convert the range to a vector
+    std::vector<EnumConstantDecl*> constants(constantsRange.begin(), constantsRange.end());
+
+    if (constants.empty()) return false;
+
+    // Pick a random constant
+    EnumConstantDecl *constant = randElement(constants);
+
+    // Generate a new value for the constant
+    int newValue = getManager().getRandomGenerator()(); // get a random int
+
+    // Replace the old value with the new one
+    getRewriter().ReplaceText(constant->getSourceRange(),
+                              constant->getNameAsString() + " = " + std::to_string(newValue));
+
+    return true;
+  }
+
+  bool VisitEnumDecl(clang::EnumDecl *ED) {
+    TheEnums.push_back(ED);
+    return true;
+  }
+
+private:
+  std::vector<clang::EnumDecl *> TheEnums;
+};
+
+static RegisterMutator<ModifyRandomEnum> M(
+    "ModifyRandomEnum", "Randomly select an EnumDecl and change the value of one of its EnumConstantDecls to a different integer value.");
+```
+
+This version of the `ModifyRandomEnum` mutator converts the `iterator_range` of `EnumConstantDecl`s to a `std::vector` so it can determine the size and select a random element.

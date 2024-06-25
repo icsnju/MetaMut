@@ -1,0 +1,445 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+AddRandomGotoStmt: Insert a new GotoStmt at a random position within a CompoundStmt excluding the last statement
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DecayRandomArrayToPointer: Decay a randomly selected array variable to a pointer variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+EmbedCompoundStmt: Embed a CompoundStmt inside another CompoundStmt
+
+IncreasePointerLevel: Increase the pointer level of a variable.
+
+InlineFunctionCall: Inline a function call with its body.
+
+InsertRandomTypeConversion: Insert a random type conversion to a compatible type.
+
+InsertRandomUnaryOperator: Insert a unary operator before a literal.
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+InvertFunctionCondition: Inverts the condition of a boolean function.
+
+LiftNestedFunction: Lifts a function call to the outer level and replaces the original location with a new variable.
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+MutateFunctionReturnType: Change return type of a non-void function to double and modify return statements.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+ReplaceBinaryOperatorWithEquivalent: Replace binary operator with an equivalent operation.
+
+ReplaceLiteralWithConstant: Replace a literal with a global constant.
+
+ReplaceReturnWithGlobal: Replace a function's return expression with a global variable.
+
+ShiftFunctionParams: Shift the position of all parameters one place to the right.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+SwapNestedIfElse: Swap a nested if-else statement and inverse the condition.
+
+SwitchInitExpr: Switch initialization expressions of two VarDecls.
+
+ToggleLoopType: Toggle between `for` and `while` loop types.
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:15.771171
+```
+ToggleVarDeclInitialization: This mutator finds variable declarations with initializers, and for a randomly selected one, it either removes the initialization if present or adds a default initialization if not present.
+```
+Q>>>>>>>>0:00:15.772325
+Assist me in identifying test cases that can effectively apply the mutator named ToggleVarDeclInitialization.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:01:01.799456
+Sure, I'll provide several test cases that can be used with the `ToggleVarDeclInitialization` mutator. The mutator either removes the initialization from a variable declaration or adds a default initialization if it's not present.
+
+**Test Case 1:** A basic program with variable initialization where the mutator can remove the initialization.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 10;
+    printf("Value of a: %d\n", a);
+    return 0;
+}
+```
+**Expected mutation:** The mutator could remove the initialization from the variable `a`, resulting in `int a;`.
+
+**Test Case 2:** A basic program without variable initialization where the mutator can add default initialization.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int b;
+    printf("Value of b: %d\n", b);
+    return 0;
+}
+```
+**Expected mutation:** The mutator could add default initialization to the variable `b`, resulting in `int b = 0;`.
+
+**Test Case 3:** A more complex program with multiple variable initializations.
+
+```c
+#include <stdio.h>
+
+void calculateArea() {
+    int length = 10;
+    int breadth = 20;
+    int area = length * breadth;
+    printf("Area: %d\n", area);
+}
+
+int main() {
+    calculateArea();
+    return 0;
+}
+```
+**Expected mutation:** The mutator could remove the initialization from any of the variables `length`, `breadth`, or `area`.
+
+**Test Case 4:** A program with multiple uninitialized variables where the mutator can add default initialization.
+
+```c
+#include <stdio.h>
+
+void calculateVolume() {
+    int length, breadth, height;
+    printf("Volume: %d\n", length * breadth * height);
+}
+
+int main() {
+    calculateVolume();
+    return 0;
+}
+```
+**Expected mutation:** The mutator could add default initialization to any of the variables `length`, `breadth`, or `height`, e.g., `int length = 0;`.
+Q>>>>>>>>0:01:01.803421
+Assist me in implementing the mutator named ToggleVarDeclInitialization. Below is the description of its functionality:
+This mutator finds variable declarations with initializers, and for a randomly selected one, it either removes the initialization if present or adds a default initialization if not present.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:54.821240
+Sure, here is how you can implement the `ToggleVarDeclInitialization` mutator:
+
+```cpp
+// ToggleVarDeclInitialization.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ToggleVarDeclInitialization : public Mutator,
+                                    public clang::RecursiveASTVisitor<ToggleVarDeclInitialization> {
+public:
+  using Mutator::Mutator;
+  
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheVars.empty()) return false;
+
+    VarDecl *var = randElement(TheVars);
+    
+    if (var->hasInit()) {
+      // Remove initialization
+      getRewriter().ReplaceText(var->getSourceRange(), var->getNameAsString());
+    } else {
+      // Add default initialization
+      std::string defaultInit = " = 0";
+      getRewriter().InsertTextAfter(getLocForEndOfToken(var->getEndLoc()), defaultInit);
+    }
+
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    TheVars.push_back(VD);
+    return true;
+  }
+
+private:
+  std::vector<clang::VarDecl *> TheVars;
+};
+
+static RegisterMutator<ToggleVarDeclInitialization> M(
+    "ToggleVarDeclInitialization", "Toggle variable declaration initialization.");
+```
+
+In this implementation, the `ToggleVarDeclInitialization` mutator inherits from the `Mutator` class and the `RecursiveASTVisitor`. The `ToggleVarDeclInitialization` mutator traverses the AST and collects all variable declarations within the `VisitVarDecl` method.
+
+The `mutate` method is called to perform the mutation. If the selected `VarDecl` has an initializer, it removes the initialization. If it doesn't have an initializer, it adds a default initialization of `0`.
+
+The `getLocForEndOfToken` is used to get the location for the end of the last token in the source range of a `VarDecl`. This location is used to insert the default initialization when the `VarDecl` doesn't have an initializer.
+
+The `getRewriter().ReplaceText` and `getRewriter().InsertTextAfter` methods are used to perform the mutation on the source code. 
+
+The mutator is registered with the `MutatorManager` using the `RegisterMutator` macro, with the name "ToggleVarDeclInitialization" and a description.

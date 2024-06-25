@@ -1,0 +1,58 @@
+# .gitignore
+
+# CMake Files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+CMakeTmp/
+cmake_install.cmake
+# !Makefile
+# !*.cmake
+# !CMakeLists.txt
+
+# Build output
+build/
+output/
+seeds/
+compilers/
+objects/
+workspace/
+Debug/
+Release/
+.vs/
+*.o
+*.O
+*.so
+*.dylib
+*.dll
+*.exe
+*.swp
+*.swo
+
+# Python Files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment and Install
+env/
+venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Packages
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.msi
+*.whl
+
+# Logs
+logs/
+*.log

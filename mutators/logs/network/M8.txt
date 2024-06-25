@@ -1,0 +1,946 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+AddRandomGotoStmt: Insert a new GotoStmt at a random position within a CompoundStmt excluding the last statement
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DecayRandomArrayToPointer: Decay a randomly selected array variable to a pointer variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+EmbedCompoundStmt: Embed a CompoundStmt inside another CompoundStmt
+
+IncreasePointerLevel: Increase the pointer level of a variable.
+
+InlineFunctionCall: Inline a function call with its body.
+
+InsertRandomNullCheck: Insert a null check before a pointer or array variable is used.
+
+InsertRandomTypeConversion: Insert a random type conversion to a compatible type.
+
+InsertRandomUnaryOperator: Insert a unary operator before a literal.
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+InvertFunctionCondition: Inverts the condition of a boolean function.
+
+LiftNestedFunction: Lifts a function call to the outer level and replaces the original location with a new variable.
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+MutateFunctionReturnType: Change return type of a non-void function to double and modify return statements.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+ReplaceBinaryOperatorWithEquivalent: Replace binary operator with an equivalent operation.
+
+ReplaceLiteralWithConstant: Replace a literal with a global constant.
+
+ReplaceReturnWithGlobal: Replace a function's return expression with a global variable.
+
+ShiftFunctionParams: Shift the position of all parameters one place to the right.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+SwapNestedIfElse: Swap a nested if-else statement and inverse the condition.
+
+SwitchInitExpr: Switch initialization expressions of two VarDecls.
+
+ToggleLoopType: Toggle between `for` and `while` loop types.
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+ToggleVarDeclInitialization: Toggle variable declaration initialization.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:15.738249
+```
+InsertRandomFunctionCall: This mutator randomly selects a function and inserts a call to this function with random (compatible) arguments at a random position within a CompoundStmt.
+```
+Q>>>>>>>>0:00:15.740183
+Assist me in identifying test cases that can effectively apply the mutator named InsertRandomFunctionCall.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:00:43.505801
+Sure, here are a few test cases that you might find useful for the `InsertRandomFunctionCall` mutator.
+
+**Test Case 1:**
+
+```c
+#include <stdio.h>
+
+void sayHello() {
+    printf("Hello, World!\n");
+}
+
+int main() {
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+In this simple program, `InsertRandomFunctionCall` might insert a call to `sayHello()` inside the `main()` function, creating a new output line.
+
+**Test Case 2:**
+
+```c
+#include <stdio.h>
+
+void multiply(int a, int b) {
+    printf("The product is: %d\n", a * b);
+}
+
+int main() {
+    int x = 5;
+    int y = 10;
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+In this program, `InsertRandomFunctionCall` might insert a call to `multiply()` inside the `main()` function. The mutator could use the variables `x` and `y` as arguments for the function call.
+
+**Test Case 3:**
+
+```c
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name);
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+In this program, `InsertRandomFunctionCall` might insert a call to `greet()` inside the `main()` function, using the variable `name` as an argument.
+Q>>>>>>>>0:00:43.514347
+Assist me in implementing the mutator named InsertRandomFunctionCall. Below is the description of its functionality:
+This mutator randomly selects a function and inserts a call to this function with random (compatible) arguments at a random position within a CompoundStmt.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:28.486146
+Based on your requirements and the provided reference implementations, here is an implementation for the `InsertRandomFunctionCall` mutator. This implementation collects all functions and their respective arguments and randomly selects a function to be inserted at a random position within a `CompoundStmt`.
+
+```cpp
+// InsertRandomFunctionCall.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class InsertRandomFunctionCall
+    : public Mutator,
+      public clang::RecursiveASTVisitor<InsertRandomFunctionCall> {
+public:
+  using Mutator::Mutator;
+  
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFunctions.empty() || CompoundStmts.empty()) return false;
+
+    FunctionDecl *func = randElement(TheFunctions);
+    CompoundStmt *stmt = randElement(CompoundStmts);
+
+    // Generate function call
+    std::string funcCall = func->getNameInfo().getAsString() + "(";
+    for (auto it = func->param_begin(); it != func->param_end(); ++it) {
+      funcCall += (*it)->getNameAsString();
+      if(std::next(it) != func->param_end())
+        funcCall += ", ";
+    }
+    funcCall += ");\n";
+
+    // Insert the function call at a random position in the CompoundStmt
+    int randomStmtIndex = randIndex(stmt->size());
+    auto stmtToInsertAfter = stmt->body_begin();
+    std::advance(stmtToInsertAfter, randomStmtIndex);
+    
+    SourceLocation insertLoc = getLocForEndOfToken((*stmtToInsertAfter)->getEndLoc());
+    getRewriter().InsertTextAfter(insertLoc, funcCall);
+
+    return true;
+  }
+
+  bool VisitFunctionDecl(clang::FunctionDecl *FD) {
+    // Only consider functions with body (definition) and parameters
+    if(FD->hasBody() && FD->getNumParams() > 0) {
+      TheFunctions.push_back(FD);
+    }
+    return true;
+  }
+
+  bool VisitCompoundStmt(clang::CompoundStmt *CS) {
+    CompoundStmts.push_back(CS);
+    return true;
+  }
+
+private:
+  std::vector<clang::FunctionDecl *> TheFunctions;
+  std::vector<clang::CompoundStmt *> CompoundStmts;
+};
+
+static RegisterMutator<InsertRandomFunctionCall> X(
+    "InsertRandomFunctionCall", "Insert a random function call in a CompoundStmt.");
+```
+
+This mutator goes through the AST, collects all `FunctionDecl`s with defined bodies and more than zero parameters, and all `CompoundStmt`s. During the mutation, it randomly selects one function and one `CompoundStmt`. It then generates a function call string and inserts it at a random position within the `CompoundStmt`. 
+
+The function parameters are assumed to have the same names in the scope of the `CompoundStmt`. In a more complex scenario, you would need to ensure that the arguments of the function call are compatible with the selected function and available in the scope of the `CompoundStmt`.
+Q>>>>>>>>0:01:58.863257
+Based on the results of your InsertRandomFunctionCall implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘greet’:
+output/output.c:4:33: error: expected ‘;’ before ‘greet’
+    4 |     printf("Hello, %s!\n", name)greet(name);
+      |                                 ^~~~~
+      |                                 ;
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name);
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name)greet(name);
+;
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,7 +1,8 @@
+ #include <stdio.h>
+ 
+ void greet(char* name) {
+-    printf("Hello, %s!\n", name);
++    printf("Hello, %s!\n", name)greet(name);
++;
+ }
+ 
+ int main() {
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:31.318764
+It seems the issue occurs because the `InsertTextAfter` function is used to insert the new function call. This results in the insertion being performed immediately after the selected statement, without including a semicolon to terminate the previous statement, which causes a compilation error.
+
+To resolve this, we can use the `ReplaceText` function, which would allow us to replace the selected statement with the original statement followed by the new function call (and a semicolon).
+
+Here is the updated `mutate` function:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFunctions.empty() || CompoundStmts.empty()) return false;
+
+    FunctionDecl *func = randElement(TheFunctions);
+    CompoundStmt *stmt = randElement(CompoundStmts);
+
+    // Generate function call
+    std::string funcCall = func->getNameInfo().getAsString() + "(";
+    for (auto it = func->param_begin(); it != func->param_end(); ++it) {
+      funcCall += (*it)->getNameAsString();
+      if(std::next(it) != func->param_end())
+        funcCall += ", ";
+    }
+    funcCall += ");\n";
+
+    // Insert the function call at a random position in the CompoundStmt
+    int randomStmtIndex = randIndex(stmt->size());
+    auto stmtToInsertAfter = stmt->body_begin();
+    std::advance(stmtToInsertAfter, randomStmtIndex);
+    
+    SourceLocation insertLoc = getLocForEndOfToken((*stmtToInsertAfter)->getEndLoc());
+
+    // Get the original source code for the statement
+    std::string originalStmtCode = getSourceText((*stmtToInsertAfter)->getSourceRange()).str();
+
+    // Replace the original statement with the original statement 
+    // followed by the new function call
+    getRewriter().ReplaceText((*stmtToInsertAfter)->getSourceRange(), 
+                              originalStmtCode + funcCall);
+
+    return true;
+}
+```
+
+In this updated version, we first generate the source code for the original statement using the `getSourceText` function. We then replace the original statement with the original statement followed by the new function call. This ensures that the previous statement is properly terminated with a semicolon before the new function call is inserted.
+Q>>>>>>>>0:02:31.326214
+Based on the results of your InsertRandomFunctionCall implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘greet’:
+output/output.c:4:33: error: expected ‘;’ before ‘greet’
+    4 |     printf("Hello, %s!\n", name)greet(name);
+      |                                 ^~~~~
+      |                                 ;
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name);
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name)greet(name);
+;
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,7 +1,8 @@
+ #include <stdio.h>
+ 
+ void greet(char* name) {
+-    printf("Hello, %s!\n", name);
++    printf("Hello, %s!\n", name)greet(name);
++;
+ }
+ 
+ int main() {
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:03:03.830115
+I apologize for the confusion in my previous responses. It seems I misunderstood the precise location where the new function call should be inserted. The issue is due to the fact that the function call has been inserted immediately after the preceding statement, causing it to be treated as part of the same line of code. The generated function call should be inserted on a new line to avoid interfering with the preceding statement.
+
+Here is the corrected code:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFunctions.empty() || CompoundStmts.empty()) return false;
+
+    FunctionDecl *func = randElement(TheFunctions);
+    CompoundStmt *stmt = randElement(CompoundStmts);
+
+    // Generate function call
+    std::string funcCall = func->getNameInfo().getAsString() + "(";
+    for (auto it = func->param_begin(); it != func->param_end(); ++it) {
+      funcCall += (*it)->getNameAsString();
+      if(std::next(it) != func->param_end())
+        funcCall += ", ";
+    }
+    funcCall += ");\n";
+
+    // Insert the function call at a random position in the CompoundStmt
+    int randomStmtIndex = randIndex(stmt->size());
+    auto stmtToInsertAfter = stmt->body_begin();
+    std::advance(stmtToInsertAfter, randomStmtIndex);
+    
+    SourceLocation insertLoc = getLocForEndOfToken((*stmtToInsertAfter)->getEndLoc());
+
+    // Get the original source code for the statement
+    std::string originalStmtCode = getSourceText((*stmtToInsertAfter)->getSourceRange()).str();
+
+    // Replace the original statement with the original statement 
+    // followed by the new function call
+    getRewriter().ReplaceText((*stmtToInsertAfter)->getSourceRange(), 
+                              originalStmtCode + ";\n" + funcCall);
+
+    return true;
+}
+```
+
+In this version, I have added a semicolon and a newline before the generated function call in the `ReplaceText` function. This ensures the preceding statement is properly terminated and the new function call is inserted on a new line, avoiding the compilation error.
+Q>>>>>>>>0:03:03.839233
+Based on the results of your InsertRandomFunctionCall implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘greet’:
+output/output.c:4:33: error: expected ‘;’ before ‘greet’
+    4 |     printf("Hello, %s!\n", name)greet(name);
+      |                                 ^~~~~
+      |                                 ;
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name);
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+void greet(char* name) {
+    printf("Hello, %s!\n", name)greet(name);
+;
+}
+
+int main() {
+    char* name = "John";
+    printf("This is a test.\n");
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,7 +1,8 @@
+ #include <stdio.h>
+ 
+ void greet(char* name) {
+-    printf("Hello, %s!\n", name);
++    printf("Hello, %s!\n", name)greet(name);
++;
+ }
+ 
+ int main() {
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:03:34.417856
+I apologize for the confusion. I see that the issue persists. The function call is being appended directly after the `printf` statement without a semicolon, leading to a syntax error. Let's attempt to resolve this by refining the way we replace the text, ensuring the semicolon is placed correctly:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFunctions.empty() || CompoundStmts.empty()) return false;
+
+    FunctionDecl *func = randElement(TheFunctions);
+    CompoundStmt *stmt = randElement(CompoundStmts);
+
+    // Generate function call
+    std::string funcCall = func->getNameInfo().getAsString() + "(";
+    for (auto it = func->param_begin(); it != func->param_end(); ++it) {
+      funcCall += (*it)->getNameAsString();
+      if(std::next(it) != func->param_end())
+        funcCall += ", ";
+    }
+    funcCall += ");";
+
+    // Insert the function call at a random position in the CompoundStmt
+    int randomStmtIndex = randIndex(stmt->size());
+    auto stmtToInsertAfter = stmt->body_begin();
+    std::advance(stmtToInsertAfter, randomStmtIndex);
+    
+    SourceLocation insertLoc = getLocForEndOfToken((*stmtToInsertAfter)->getEndLoc());
+
+    // Get the original source code for the statement
+    std::string originalStmtCode = getSourceText((*stmtToInsertAfter)->getSourceRange()).str();
+
+    // Replace the original statement with the original statement 
+    // followed by the new function call
+    getRewriter().ReplaceText((*stmtToInsertAfter)->getSourceRange(), 
+                              originalStmtCode + ";\n" + funcCall);
+
+    return true;
+}
+```
+
+In this updated version, the `getRewriter().ReplaceText` function replaces the original statement with the original statement, followed by a semicolon and newline, and then the new function call. This ensures the original statement is properly terminated before the new function call is inserted.======= 2023-10-06 03:54:21.819464 =======
+Traceback (most recent call last):
+  File "MetaMut/scripts/main.py", line 51, in test_gpt
+    mg.run()
+  File "MetaMut/scripts/MetaMut.py", line 288, in run
+    impl = self.refine(impl, examples)
+  File "MetaMut/scripts/MetaMut.py", line 276, in refine
+    impl = self.query('RefineMutator')
+  File "MetaMut/scripts/MetaMut.py", line 260, in query
+    raise ExceedMaxRetryQueryTimes()
+MetaMut.ExceedMaxRetryQueryTimes

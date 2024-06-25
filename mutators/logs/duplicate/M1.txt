@@ -1,0 +1,1224 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+AddRandomGotoStmt: Insert a new GotoStmt at a random position within a CompoundStmt excluding the last statement
+
+AlterRandomPointerToRandomArray: Change a pointer declaration to an array declaration and modify dereference to array indexing.
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+ChangeRandomPointerInitialization: Randomly selects a PointerType variable initialization and changes its initialized value to another compatible pointer variable or null.
+
+CollapseNestedIfs: Collapse nested if-else statements into a single if statement with a compound logical condition.
+
+CompoundStmtGrouping: Group consecutive statements within a CompoundStmt.
+
+ConvertForToWhileLoop: Convert a 'for' loop into an equivalent 'while' loop.
+
+ConvertGlobalToLocal: Converts a global variable to local variables in all functions where it is used
+
+ConvertIfToSwitch: Converts simple if-else-if ladders into a switch-case construct
+
+DecayRandomArrayToPointer: Decay a randomly selected array variable to a pointer variable.
+
+DecayRandomFunctionToPointer: Decays random functions to pointers and adjusts call sites accordingly.
+
+DecayRandomPointerToArray: Change a pointer declaration to an array declaration.
+
+DecayRandomStructToUnion: Randomly select a struct declaration and convert it into a union
+
+DecomposeRandomCompoundAssignment: Decompose a CompoundAssignOperator into separate binary operation and assignment.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+DuplicateRandomUnaryOperator: Duplicate randomly selected UnaryOperator.
+
+EmbedCompoundStmt: Embed a CompoundStmt inside another CompoundStmt
+
+FlipLogicalOperator: Flip the logical operator in a LogicalExpr.
+
+IncreasePointerLevel: Increase the pointer level of a variable.
+
+InlineFunctionCall: Inline a function call with its body.
+
+InlineRandomVarDecl: Inline a random VarDecl's initializer and remove the declaration.
+
+InsertRandomArrayIndexMutation: Mutate an array index randomly.
+
+InsertRandomBreakStmt: Randomly inserts a break statement in a loop body.
+
+InsertRandomFunctionCall: Insert a random function call in a CompoundStmt.
+
+InsertRandomReturnStmt: Insert a return statement at a random position in a function
+
+InsertRandomTypeConversion: Insert a random type conversion to a compatible type.
+
+InsertRandomUnaryOperator: Insert a unary operator before a literal.
+
+InterchangeFuncCalls: Interchange positions of two function calls within a CompoundStmt
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+InvertFunctionCondition: Inverts the condition of a boolean function.
+
+InvertRelationalOperator: Invert the relational operator in a BinaryOperator
+
+LiftNestedFunction: Lifts a function call to the outer level and replaces the original location with a new variable.
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+ModifyFunctionDefaultArgument: Modify function's default argument and adjust all call sites accordingly.
+
+ModifyRandomEnum: Randomly select an EnumDecl and change the value of one of its EnumConstantDecls to a different integer value.
+
+ModifyRandomFieldOfStruct: Randomly selects a FieldDecl within a RecordDecl (Struct or Union), and changes its type to another compatible type from the existing types in the program.
+
+ModifyRandomFieldOfStructMutator: This mutator modifies a random field of a struct.
+
+ModifyVariadicFunctionArguments: Adds an argument to a variadic function call.
+
+MutateFunctionReturnType: Change return type of a non-void function to double and modify return statements.
+
+MutateLoopBounds: Modify the loop control variable's initialization, condition, or increment/decrement statement.
+
+MutatePointerTypeToDifferentType: Change pointer's pointed-to type.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+RandomizeCaseStmts: Randomly shuffles the order of CaseStmts in a SwitchStmt
+
+RandomizeFunctionCallArgumentValues: Randomizes the values of arguments in function calls
+
+RandomizeFunctionOrder: Randomly swap two function definitions in a program.
+
+RandomizeIfElseBranches: Randomly selects an IfStmt, inverts the condition, and swaps the then and else branches.
+
+RandomizeNullArgumentValues: Replace NULL arguments in function calls with a random string
+
+RandomizeNullStringArguments: Replace NULL string arguments in function calls with a random string
+
+RandomizeParamDefaultValues: Replace zero integer arguments in function calls with a random number
+
+RandomizeTernaryDefaults: Randomize the default values used in ternary expressions.
+
+RandomizeTernaryNullDefaults: Randomize the default values used in ternary expressions when null pointers are detected.
+
+RandomizeZeroArgumentMutator: Randomizes zero arguments in function calls to a random integer
+
+RandomizeZeroArgumentValues: Replace zero arguments in function calls with a random integer
+
+RearrangeFunctionParams: Rearranges the parameters of function declarations randomly.
+
+RemoveRandomParameter: Randomly remove a non-essential parameter from a function declaration and adjust all call sites accordingly.
+
+ReplaceArrayWithPointer: Change an ArrayDecl to PointerDecl and modify all relevant array access expressions to pointer dereference.
+
+ReplaceBinaryOperatorWithEquivalent: Replace binary operator with an equivalent operation.
+
+ReplaceFunctionCallWithConstant: Replace a function call with a constant value.
+
+ReplaceLiteralWithConstant: Replace a literal with a global constant.
+
+ReplaceLiteralWithRandomValue: Replace a literal with a random value of the same type.
+
+ReplaceRandomCompoundAssignWithSeparate: Randomly selects a CompoundAssignOperator (like +=, -=, *=, /=), breaks it down into a separate binary operation and an assignment, and replaces the original CompoundAssignOperator with the two new separate statements.
+
+ReplaceRandomExprWithNullptr: Replace a random pointer expression with NULL.
+
+ReplaceRandomIntWithCharLiteral: Randomly replace an integer literal with a character literal from the ASCII range 0-127.
+
+ReplaceRandomTypeWithTypedef: Randomly selects a Type and replaces it with a typedef of the same underlying type.
+
+ReplaceReturnWithGlobal: Replace a function's return expression with a global variable.
+
+ReplaceWhileWithDoWhile: Replace a WhileStmt with a DoWhileStmt, retaining the condition and body.
+
+ReplaceWithEquivalentUnaryExpr: Replace UnaryExpr with an equivalent UnaryExpr that uses a different operator.
+
+ScrambleFunctionArgs: Randomly shuffle function arguments while maintaining type compatibility.
+
+ShiftFunctionParams: Shift the position of all parameters one place to the right.
+
+SplitCompoundStmt: Randomly split a CompoundStmt into two nested CompoundStmts.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+SwapNestedFunctionCalls: Swap the positions of two nested function calls.
+
+SwapNestedIfElse: Swap a nested if-else statement and inverse the condition.
+
+SwapNestedLoops: Swap the bodies of inner and outer loop.
+
+SwapRandomBinaryOperands: Swap operands of a random BinaryOperator's expression.
+
+SwapRandomUnaryOperands: Swap operands of a random UnaryOperator's BinaryOperator sub-expression.
+
+SwitchInitExpr: Switch initialization expressions of two VarDecls.
+
+SwitchNestedCompoundStmt: Switch bodies of two nested CompoundStmts
+
+ToggleLoopType: Toggle between `for` and `while` loop types.
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+ToggleStaticVarDecl: Toggle static and non-static for VarDecl
+
+ToggleVarDeclInitialization: Toggle variable declaration initialization.
+
+TransformConditionalOperatorToIf: Transform a ConditionalOperator into an IfStmt
+
+TransformConditionalOperatorToIfStmt: Transform a ConditionalOperator into an IfStmt
+
+TransformForToRecursion: Transform for-loops into equivalent recursion
+
+WrapStmtInIf: Wrap a random non-control-flow statement with an if-statement with a random boolean condition.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:14.327889
+```
+ReorderFunctionDecls: This mutator randomly selects two function declarations in a TranslationUnitDecl, and swaps their positions, effectively reordering the function definitions within the program.
+```
+Q>>>>>>>>0:00:14.329478
+Assist me in identifying test cases that can effectively apply the mutator named ReorderFunctionDecls.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Please use only C features
+A<<<<<<<<0:01:03.712253
+Sure, here are some test cases for the `ReorderFunctionDecls` mutator:
+
+**Test Case 1**: Two simple functions
+```c
+#include <stdio.h>
+
+void functionA() {
+    printf("This is function A.\n");
+}
+
+void functionB() {
+    printf("This is function B.\n");
+}
+
+int main() {
+    functionA();
+    functionB();
+    return 0;
+}
+```
+The `ReorderFunctionDecls` mutator can swap the declarations of `functionA` and `functionB`. Since these functions don't depend on each other, the program should work as expected after the mutation.
+
+**Test Case 2**: Function calling another function
+```c
+#include <stdio.h>
+
+void functionA() {
+    printf("This is function A.\n");
+}
+
+void functionB() {
+    functionA();
+    printf("This is function B.\n");
+}
+
+int main() {
+    functionB();
+    return 0;
+}
+```
+In this test case, `functionB` calls `functionA`. The `ReorderFunctionDecls` mutator can swap the declarations of `functionA` and `functionB`, which will still result in a valid program.
+
+**Test Case 3**: Recursive function
+```c
+#include <stdio.h>
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+```
+In this test case, the `printNumbers` function calls itself. The `ReorderFunctionDecls` mutator cannot directly swap the declaration of `printNumbers` with other functions without causing a compile error because the function is recursive. However, if another function (that doesn't depend on `printNumbers`) is added to the program, the `ReorderFunctionDecls` mutator can swap the declarations of `printNumbers` and the new function, resulting in a valid program.
+
+**Test Case 4**: Functions with dependencies
+```c
+#include <stdio.h>
+
+void functionA() {
+    functionB();
+    printf("This is function A.\n");
+}
+
+void functionB() {
+    printf("This is function B.\n");
+}
+
+int main() {
+    functionA();
+    return 0;
+}
+```
+In this test case, `functionA` calls `functionB`. If the `ReorderFunctionDecls` mutator swaps the declarations of `functionA` and `functionB`, the program will not compile because `functionB` has not been declared before it is used in `functionA`. This case is interesting because it tests the mutator's ability to handle (or not handle) dependencies between functions.
+Q>>>>>>>>0:01:04.103532
+Assist me in implementing the mutator named ReorderFunctionDecls. Below is the description of its functionality:
+This mutator randomly selects two function declarations in a TranslationUnitDecl, and swaps their positions, effectively reordering the function definitions within the program.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* getSourceText(const NodeType *node).str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName), note that this only generate a identifier for you, you should insert declaration to corresponding CompStmt by yourself
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:58.962289
+Here is a possible implementation of the `ReorderFunctionDecls` mutator:
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ReorderFunctionDecls : public Mutator, public RecursiveASTVisitor<ReorderFunctionDecls> {
+public:
+  using Mutator::Mutator;
+
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFuncs.size() < 2) return false;
+
+    // Randomly select two different function declarations
+    int idx1 = randIndex(TheFuncs.size());
+    int idx2;
+    do {
+        idx2 = randIndex(TheFuncs.size());
+    } while(idx1 == idx2);
+
+    FunctionDecl *func1 = TheFuncs[idx1];
+    FunctionDecl *func2 = TheFuncs[idx2];
+
+    // Get function source code
+    std::string func1Code = getSourceText(func1).str();
+    std::string func2Code = getSourceText(func2).str();
+
+    // Swap the function declarations
+    getRewriter().ReplaceText(func1->getSourceRange(), func2Code);
+    getRewriter().ReplaceText(func2->getSourceRange(), func1Code);
+
+    return true;
+  }
+
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    if (!FD->isThisDeclarationADefinition()) return true;
+
+    // Only consider function if definition is within main file (not in an included file)
+    SourceManager &SM = getASTContext().getSourceManager();
+    if (!SM.isInMainFile(FD->getBeginLoc())) return true;
+
+    TheFuncs.push_back(FD);
+    return true;
+  }
+
+private:
+  std::vector<FunctionDecl *> TheFuncs;
+};
+
+static RegisterMutator<ReorderFunctionDecls> M("ReorderFunctionDecls", "Randomly reorder two function declarations in the translation unit.");
+```
+The `ReorderFunctionDecls` class extends `Mutator` and `RecursiveASTVisitor`. The `mutate` method traverses the AST of the program, selects two different function declarations randomly, and swaps their positions using the `Rewriter` utility. The `VisitFunctionDecl` method collects all function declarations that are in the main file and are not forward declarations. These function declarations are stored in the `TheFuncs` vector.
+Q>>>>>>>>0:03:00.142632
+Based on the results of your ReorderFunctionDecls implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+If this consistently happens, you may try other approaches.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c:8:6: error: conflicting types for 'printNumbers'
+void printNumbers(int n) {
+     ^
+output/output.c:4:5: note: previous implicit declaration is here
+    printNumbers(5);
+    ^
+1 error generated.
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,13 +1,13 @@
+ #include <stdio.h>
++
++int main() {
++    printNumbers(5);
++    return 0;
++}
+ 
+ void printNumbers(int n) {
+     if(n > 0) {
+         printNumbers(n - 1);
+     }
+     printf("%d\n", n);
+-}
+-
+-int main() {
+-    printNumbers(5);
+-    return 0;
+ }
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:04:21.724666
+Based on the results of your ReorderFunctionDecls implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+If this consistently happens, you may try other approaches.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c:8:6: error: conflicting types for 'printNumbers'
+void printNumbers(int n) {
+     ^
+output/output.c:4:5: note: previous implicit declaration is here
+    printNumbers(5);
+    ^
+1 error generated.
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,13 +1,13 @@
+ #include <stdio.h>
++
++int main() {
++    printNumbers(5);
++    return 0;
++}
+ 
+ void printNumbers(int n) {
+     if(n > 0) {
+         printNumbers(n - 1);
+     }
+     printf("%d\n", n);
+-}
+-
+-int main() {
+-    printNumbers(5);
+-    return 0;
+ }
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+Q>>>>>>>>0:04:21.736700
+Based on the results of your ReorderFunctionDecls implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+If this consistently happens, you may try other approaches.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c:8:6: error: conflicting types for 'printNumbers'
+void printNumbers(int n) {
+     ^
+output/output.c:4:5: note: previous implicit declaration is here
+    printNumbers(5);
+    ^
+1 error generated.
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+int main() {
+    printNumbers(5);
+    return 0;
+}
+
+void printNumbers(int n) {
+    if(n > 0) {
+        printNumbers(n - 1);
+    }
+    printf("%d\n", n);
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,13 +1,13 @@
+ #include <stdio.h>
++
++int main() {
++    printNumbers(5);
++    return 0;
++}
+ 
+ void printNumbers(int n) {
+     if(n > 0) {
+         printNumbers(n - 1);
+     }
+     printf("%d\n", n);
+-}
+-
+-int main() {
+-    printNumbers(5);
+-    return 0;
+ }
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:05:36.828329
+The error has occurred because the function `printNumbers` is being called in `main()` before it's being declared. In C, a function must be declared before it is used.
+
+In this case, the function declaration (`printNumbers(int n)`) is moved after `main()`, where it is called, and therefore the compiler doesn't recognize it when parsing `main()`.
+
+Here is an updated implementation of the `ReorderFunctionDecls` mutator that inserts function prototypes at the top of the file when necessary:
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ReorderFunctionDecls : public Mutator, public RecursiveASTVisitor<ReorderFunctionDecls> {
+public:
+  using Mutator::Mutator;
+
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFuncs.size() < 2) return false;
+
+    // Randomly select two different function declarations
+    int idx1 = randIndex(TheFuncs.size());
+    int idx2;
+    do {
+        idx2 = randIndex(TheFuncs.size());
+    } while(idx1 == idx2);
+
+    FunctionDecl *func1 = TheFuncs[idx1];
+    FunctionDecl *func2 = TheFuncs[idx2];
+
+    // Get function source code
+    std::string func1Code = getSourceText(func1).str();
+    std::string func2Code = getSourceText(func2).str();
+
+    // Swap the function declarations
+    getRewriter().ReplaceText(func1->getSourceRange(), func2Code);
+    getRewriter().ReplaceText(func2->getSourceRange(), func1Code);
+
+    // If the function is used before its definition, add a prototype at the beginning of the file
+    if (isUsedBeforeDefinition(func1))
+        getRewriter().InsertTextBefore(getMostRecentTranslationUnitDecl(func1)->getBeginLoc(), getPrototype(func1) + ";\n");
+    if (isUsedBeforeDefinition(func2))
+        getRewriter().InsertTextBefore(getMostRecentTranslationUnitDecl(func2)->getBeginLoc(), getPrototype(func2) + ";\n");
+
+    return true;
+  }
+
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    if (!FD->isThisDeclarationADefinition()) return true;
+
+    // Only consider function if definition is within main file (not in an included file)
+    SourceManager &SM = getASTContext().getSourceManager();
+    if (!SM.isInMainFile(FD->getBeginLoc())) return true;
+
+    TheFuncs.push_back(FD);
+    return true;
+  }
+
+private:
+  std::vector<FunctionDecl *> TheFuncs;
+
+  // Returns true if the function is used before its definition
+  bool isUsedBeforeDefinition(FunctionDecl *FD) {
+    SourceManager &SM = getASTContext().getSourceManager();
+    for (auto use : FD->uses()) {
+      if (SM.isBeforeInTranslationUnit(use.getUseLoc(), FD->getBeginLoc()))
+        return true;
+    }
+    return false;
+  }
+
+  // Returns the prototype of a function
+  std::string getPrototype(FunctionDecl *FD) {
+    std::string prototype = FD->getReturnType().getAsString();
+    prototype += " " + FD->getNameAsString() + "(";
+    for (auto param = FD->param_begin(); param != FD->param_end(); ++param) {
+      if (param != FD->param_begin()) prototype += ", ";
+      prototype += (*param)->getType().getAsString();
+    }
+    prototype += ")";
+    return prototype;
+  }
+};
+
+static RegisterMutator<ReorderFunctionDecls> M("ReorderFunctionDecls", "Randomly reorder two function declarations in the translation unit, adding a prototype at the beginning of the file if necessary.");
+```
+
+The updated mutator now includes an additional check in the `mutate()` method. It checks whether each function that has been selected for reordering is used before its definition in the source code. If so, it adds a function prototype to the beginning of the file. This ensures that the function is declared before its first use, avoiding the compilation error.
+Q>>>>>>>>0:05:47.908545
+Based on the results of your ReorderFunctionDecls implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/ReorderFunctionDecls.cpp: In member function ‘bool ReorderFunctionDecls::isUsedBeforeDefinition(clang::FunctionDecl*)’:
+MetaMut/lib/mutators/ReorderFunctionDecls.cpp:64:25: error: ‘class clang::FunctionDecl’ has no member named ‘uses’
+   64 |     for (auto use : FD->uses()) {
+      |                         ^~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:902: CMakeFiles/MetaMut.dir/lib/mutators/ReorderFunctionDecls.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:06:48.461581
+I apologize for the confusion. It seems there was a misunderstanding in the API usage. `FunctionDecl` does not have a method named `uses()`. Instead, we should iterate all `CallExpr` to check if a function is used before it's defined. Here is the updated implementation:
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ReorderFunctionDecls : public Mutator, public RecursiveASTVisitor<ReorderFunctionDecls> {
+public:
+  using Mutator::Mutator;
+
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheFuncs.size() < 2) return false;
+
+    // Randomly select two different function declarations
+    int idx1 = randIndex(TheFuncs.size());
+    int idx2;
+    do {
+        idx2 = randIndex(TheFuncs.size());
+    } while(idx1 == idx2);
+
+    FunctionDecl *func1 = TheFuncs[idx1];
+    FunctionDecl *func2 = TheFuncs[idx2];
+
+    // Get function source code
+    std::string func1Code = getSourceText(func1).str();
+    std::string func2Code = getSourceText(func2).str();
+
+    // Swap the function declarations
+    getRewriter().ReplaceText(func1->getSourceRange(), func2Code);
+    getRewriter().ReplaceText(func2->getSourceRange(), func1Code);
+
+    // If the function is used before its definition, add a prototype at the beginning of the file
+    if (isUsedBeforeDefinition(func1))
+        getRewriter().InsertTextBefore(getMostRecentTranslationUnitDecl(func1)->getBeginLoc(), getPrototype(func1) + ";\n");
+    if (isUsedBeforeDefinition(func2))
+        getRewriter().InsertTextBefore(getMostRecentTranslationUnitDecl(func2)->getBeginLoc(), getPrototype(func2) + ";\n");
+
+    return true;
+  }
+
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    if (!FD->isThisDeclarationADefinition()) return true;
+
+    // Only consider function if definition is within main file (not in an included file)
+    SourceManager &SM = getASTContext().getSourceManager();
+    if (!SM.isInMainFile(FD->getBeginLoc())) return true;
+
+    TheFuncs.push_back(FD);
+    return true;
+  }
+
+  bool VisitCallExpr(CallExpr *CE) {
+    if (FunctionDecl *FD = CE->getDirectCallee())
+      FuncUses[FD].insert(CE);
+    return true;
+  }
+
+private:
+  std::vector<FunctionDecl *> TheFuncs;
+  std::map<FunctionDecl *, std::set<const CallExpr *>> FuncUses;
+
+  // Returns true if the function is used before its definition
+  bool isUsedBeforeDefinition(FunctionDecl *FD) {
+    SourceManager &SM = getASTContext().getSourceManager();
+    for (auto use : FuncUses[FD]) {
+      if (SM.isBeforeInTranslationUnit(use->getBeginLoc(), FD->getBeginLoc()))
+        return true;
+    }
+    return false;
+  }
+
+  // Returns the prototype of a function
+  std::string getPrototype(FunctionDecl *FD) {
+    std::string prototype = FD->getReturnType().getAsString();
+    prototype += " " + FD->getNameAsString() + "(";
+    for (auto param = FD->param_begin(); param != FD->param_end(); ++param) {
+      if (param != FD->param_begin()) prototype += ", ";
+      prototype += (*param)->getType().getAsString();
+    }
+    prototype += ")";
+    return prototype;
+  }
+};
+
+static RegisterMutator<ReorderFunctionDecls> M("ReorderFunctionDecls", "Randomly reorder two function declarations in the translation unit, adding a prototype at the beginning of the file if necessary.");
+```
+
+In this updated version, `VisitCallExpr` method is added to collect all function calls (`CallExpr`). We store the function calls in a map (`FuncUses`), mapping from `FunctionDecl *` to a set of `const CallExpr *`, which represent the function calls. Then, in `isUsedBeforeDefinition` we check if there is any function call (represented by `CallExpr`) that appears before the function declaration.

@@ -1,0 +1,83 @@
+Based on the results of your {{mutator.name}} implementation, we have encountered an issue:
+
+{% if chkres.res_str == "Hang" %}
+The mutator is causing the program to hang.
+{% elif chkres.res_str == "InvalidChange" %}
+The mutator is transforming a semantically valid program into an invalid one.
+
+If this consistently happens, you may try other approaches.
+{% elif chkres.res_str == "NoChange" %}
+The output from the mutator is identical to the input.
+{% elif chkres.res_str == "Crash" %}
+The mutator itself crashes.
+{% elif chkres.res_str == "NotCompile" %}
+The implemented mutator is not compiling.
+{% elif chkres.res_str == "ApplyFail" %}
+The implemented mutator output nothing.
+{% endif %}
+
+{% if num_of_passed > 0 %}
+Note that, you have passed {{num_of_passed}} testcases.
+I paste them below, you may refer to them for better understand of your implementation:
+{% for e in passed_examples %}
+```
+{{e}}
+```
+{% endfor %}
+{% endif %}
+
+To aid in troubleshooting, please find the relevant information below:
+
+Your implementation is:
+```
+{{mutator.code}}
+```
+
+{% if chkres.errors is defined %}
+Compilation errors:
+```
+{{chkres.errors}}
+```
+{% endif %}
+
+{% if chkres.stderr is defined %}
+Output from the crash:
+```
+{{chkres.stderr}}
+```
+{% endif %}
+
+{% if chkres.backtrace is defined %}
+Backtrace from the crash:
+```
+{{chkres.backtrace}}
+```
+{% endif %}
+
+{% if chkres.isrc is defined %}
+Input program:
+```
+{{chkres.isrc}}
+```
+{% endif %}
+
+{% if chkres.osrc is defined %}
+Output program:
+```
+{{chkres.osrc}}
+```
+{% endif %}
+
+{% if chkres.diff is defined %}
+Difference between the input and output programs:
+```
+{{chkres.diff}}
+```
+{% endif %}
+
+Consider using the following APIs for easier implementation:
+```
+{% include 'notes/APIs.txt' %}
+```
+
+{% include 'notes/ImplNotes.txt' %}

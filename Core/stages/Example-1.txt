@@ -1,0 +1,7 @@
+Assist me in identifying test cases that can effectively apply the mutator named {{mutator.name}}.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Please use only C features
+- Your example better contain rich types such as struct union pointer array function-pointer, etc

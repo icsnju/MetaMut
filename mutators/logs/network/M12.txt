@@ -1,0 +1,931 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:13.271469
+```
+ModifyInitExpr: This mutator randomly selects a variable initialization statement (InitExpr) from a CompoundStmt, and alters the initial value assigned to the variable.
+```
+Q>>>>>>>>0:00:13.273334
+Assist me in identifying test cases that can effectively apply the mutator named ModifyInitExpr.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:00:42.477396
+Sure, here are some sample test cases.
+
+Test Case 1:
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 5;
+    int b = 10;
+    printf("The values of a and b are %d and %d respectively.\n", a, b);
+    return 0;
+}
+```
+
+Test Case 2:
+```c
+#include <stdio.h>
+
+void print_values(int x, int y) {
+    printf("The values of x and y are %d and %d respectively.\n", x, y);
+}
+
+int main() {
+    int val1 = 20;
+    int val2 = 30;
+    print_values(val1, val2);
+    return 0;
+}
+```
+
+Test Case 3:
+```c
+#include <stdio.h>
+
+int main() {
+    char c = 'A';
+    printf("The value of c is %c.\n", c);
+    return 0;
+}
+```
+
+Test Case 4:
+```c
+#include <stdio.h>
+
+int main() {
+    int num = 100;
+    printf("The double of num is %d.\n", 2*num);
+    return 0;
+}
+```
+
+Test Case 5:
+```c
+#include <stdio.h>
+
+int main() {
+    float f = 3.14;
+    printf("The value of f is %f.\n", f);
+    return 0;
+}
+```
+
+These test cases are simple programs that initialize one or more variables and then use those variables in some way. The ModifyInitExpr mutator should be able to modify the initialization expressions of these variables.
+Q>>>>>>>>0:00:42.487715
+Assist me in implementing the mutator named ModifyInitExpr. Below is the description of its functionality:
+This mutator randomly selects a variable initialization statement (InitExpr) from a CompoundStmt, and alters the initial value assigned to the variable.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:26.389732
+Here's an implementation of `ModifyInitExpr` mutator that follows the same structure as your example implementations. This mutator randomly selects an `InitExpr` from a `CompoundStmt` and modifies its value.
+
+```cpp
+// ModifyInitExpr.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ModifyInitExpr : public Mutator,
+                      public clang::RecursiveASTVisitor<ModifyInitExpr> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ModifyInitExpr>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheVars.empty()) return false;
+
+    VarDecl *selectedVar = randElement(TheVars);
+    Expr* init = selectedVar->getInit();
+
+    if (!init) return false;
+
+    auto& sema = getCompilerInstance().getSema();
+    auto& context = getASTContext();
+    ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+
+    if (newInit.isInvalid()) return false;
+
+    std::string replacementText = formatAsDecl(selectedVar->getType(), selectedVar->getNameAsString()) + " = " + getSourceText(newInit.get()).str();
+    getRewriter().ReplaceText(selectedVar->getSourceRange(), replacementText);
+
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (VD->hasInit() && VD->isLocalVarDecl()) {
+      TheVars.push_back(VD);
+    }
+    return true;
+  }
+
+private:
+  std::vector<clang::VarDecl *> TheVars;
+};
+
+static RegisterMutator<ModifyInitExpr> M(
+    "ModifyInitExpr", "Randomly select a variable initialization statement (InitExpr) from a CompoundStmt, and alter the initial value assigned to the variable.");
+```
+
+This implementation first collects all the local variable declarations with an initializer in the `VisitVarDecl` method. Then, in the `mutate` method, it randomly selects one of these variable declarations, generates a new integer constant using the random generator, and replaces the old initializer with the new one.
+
+Note that this implementation only modifies variables of any type with integer constants. If you want to handle other types of variables (e.g., floating-point variables, array variables), you will need to extend the implementation accordingly.
+Q>>>>>>>>0:01:36.272137
+Based on the results of your ModifyInitExpr implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/ModifyInitExpr.cpp: In member function ‘virtual bool ModifyInitExpr::mutate()’:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:106: error: no match for ‘operator%’ (operand types are ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} and ‘int’)
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~
+      |                                                                                                       |    |
+      |                                                                                                       |    int
+      |                                                                                                       std::mt19937 {aka std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>}
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom1, class _Dom2> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Expr, _Dom1, _Dom2>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::_Expr<_Dom2, typename _Dom2::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Constant, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const typename _Dom::value_type&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const typename _Dom::value_type&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_ValArray, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::valarray<typename _Dom::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::valarray<typename _Dom::value_type>&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Constant, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const typename std::valarray<_Tp>::value_type&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const typename std::valarray<_Tp>::value_type&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::valarray<_Tp>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:188: CMakeFiles/MetaMut.dir/lib/mutators/ModifyInitExpr.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:48.269534
+
+Q>>>>>>>>0:01:48.282388
+Based on the results of your ModifyInitExpr implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/ModifyInitExpr.cpp: In member function ‘virtual bool ModifyInitExpr::mutate()’:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:106: error: no match for ‘operator%’ (operand types are ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} and ‘int’)
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~
+      |                                                                                                       |    |
+      |                                                                                                       |    int
+      |                                                                                                       std::mt19937 {aka std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>}
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom1, class _Dom2> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Expr, _Dom1, _Dom2>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::_Expr<_Dom2, typename _Dom2::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Constant, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const typename _Dom::value_type&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const typename _Dom::value_type&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_ValArray, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::valarray<typename _Dom::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::valarray<typename _Dom::value_type>&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Constant, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const typename std::valarray<_Tp>::value_type&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const typename std::valarray<_Tp>::value_type&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::valarray<_Tp>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:188: CMakeFiles/MetaMut.dir/lib/mutators/ModifyInitExpr.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:00.182596
+
+Q>>>>>>>>0:02:00.197620
+Based on the results of your ModifyInitExpr implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/ModifyInitExpr.cpp: In member function ‘virtual bool ModifyInitExpr::mutate()’:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:106: error: no match for ‘operator%’ (operand types are ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} and ‘int’)
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~
+      |                                                                                                       |    |
+      |                                                                                                       |    int
+      |                                                                                                       std::mt19937 {aka std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>}
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom1, class _Dom2> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Expr, _Dom1, _Dom2>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::_Expr<_Dom2, typename _Dom2::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_Constant, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const typename _Dom::value_type&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const typename _Dom::value_type&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Expr, std::_ValArray, _Dom, typename _Dom::value_type>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::valarray<typename _Dom::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from /usr/include/c++/11/valarray:603,
+                 from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/bits/valarray_after.h:409:5: note: candidate: ‘template<class _Dom> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__modulus, typename _Dom1::value_type>::result_type> std::operator%(const std::valarray<typename _Dom::value_type>&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)’
+  409 |     _DEFINE_EXPR_BINARY_OPERATOR(%, struct std::__modulus)
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/bits/valarray_after.h:409:5: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::_Expr<_Dom1, typename _Dom1::value_type>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_ValArray, std::_Constant, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const std::valarray<_Tp>&, const typename std::valarray<_Tp>::value_type&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   ‘std::mt19937’ {aka ‘std::mersenne_twister_engine<long unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253>’} is not derived from ‘const std::valarray<_Tp>’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+In file included from MetaMut/include/json.hpp:171,
+                 from MetaMut/include/Mutator.h:18,
+                 from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/ModifyInitExpr.cpp:7:
+/usr/include/c++/11/valarray:1190:1: note: candidate: ‘template<class _Tp> std::_Expr<std::__detail::_BinClos<std::__modulus, std::_Constant, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__modulus, _Tp>::result_type> std::operator%(const typename std::valarray<_Tp>::value_type&, const std::valarray<_Tp>&)’
+ 1190 | _DEFINE_BINARY_OPERATOR(%, __modulus)
+      | ^~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/11/valarray:1190:1: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/ModifyInitExpr.cpp:30:108: note:   mismatched types ‘const std::valarray<_Tp>’ and ‘int’
+   30 |     ExprResult newInit = sema.ActOnIntegerConstant(init->getExprLoc(), getManager().getRandomGenerator() % 1000);
+      |                                                                                                            ^~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:188: CMakeFiles/MetaMut.dir/lib/mutators/ModifyInitExpr.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:10.853414
+======= 2023-10-06 00:55:26.321600 =======
+Traceback (most recent call last):
+  File "MetaMut/scripts/main.py", line 51, in test_gpt
+    mg.run()
+  File "MetaMut/scripts/MetaMut.py", line 288, in run
+    impl = self.refine(impl, examples)
+  File "MetaMut/scripts/MetaMut.py", line 276, in refine
+    impl = self.query('RefineMutator')
+  File "MetaMut/scripts/MetaMut.py", line 260, in query
+    raise ExceedMaxRetryQueryTimes()
+MetaMut.ExceedMaxRetryQueryTimes

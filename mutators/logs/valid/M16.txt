@@ -1,0 +1,631 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+InlineFunctionCall: Inline a function call with its body.
+
+InverseLogicalExpr: Inverse logical expressions.
+
+InverseUnaryOperator: Inverses a Unary Operator
+
+ModifyArrayDim: Modifies a random ArrayType variable's dimension.
+
+NegateLiteral: Negate a selected Integer or Floating point Literal.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:14.948123
+```
+SwitchInitExpr: This mutator randomly selects a VarDecl and swaps its init expression with the init expression of another randomly selected VarDecl in the same scope, while ensuring the types of the variables are compatible.
+```
+Q>>>>>>>>0:00:14.950832
+Assist me in identifying test cases that can effectively apply the mutator named SwitchInitExpr.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:00:49.992397
+Sure, here are a few test cases for the `SwitchInitExpr` mutator.
+
+**Test Case 1: Basic Test Case with Two Variables**
+
+```c
+#include<stdio.h>
+
+int main() {
+    int x = 5;
+    int y = 10;
+
+    printf("x: %d, y: %d\n", x, y);
+  
+    return 0;
+}
+```
+
+This is a basic test case where two integer variables `x` and `y` are initialized with the values `5` and `10` respectively. The `SwitchInitExpr` mutator can switch the initial values of `x` and `y`.
+
+**Test Case 2: Variables in Different Scopes**
+
+```c
+#include<stdio.h>
+
+int main() {
+    int x = 5;
+
+    {
+        int y = 10;
+        printf("Inner scope - x: %d, y: %d\n", x, y);
+    }
+
+    printf("Outer scope - x: %d\n", x);
+  
+    return 0;
+}
+```
+
+In this test case, variable `y` is in a different (inner) scope than `x`. The mutator should ensure that it doesn't switch the init expression of `x` and `y` since they are in different scopes.
+
+**Test Case 3: Multiple Variables of the Same Type**
+
+```c
+#include<stdio.h>
+
+int main() {
+    int x = 5;
+    int y = 10;
+    int z = 15;
+
+    printf("x: %d, y: %d, z: %d\n", x, y, z);
+  
+    return 0;
+}
+```
+
+In this test case, there are three integer variables `x`, `y`, and `z`. The mutator has multiple choices for switching init expressions. It can switch `x` with `y`, `x` with `z`, or `y` with `z`.
+
+**Test Case 4: Variables of Different Types**
+
+```c
+#include<stdio.h>
+
+int main() {
+    int x = 5;
+    float y = 10.5;
+
+    printf("x: %d, y: %.2f\n", x, y);
+  
+    return 0;
+}
+```
+
+In this test case, `x` is an integer and `y` is a float. The mutator should ensure that it doesn't switch the init expressions of `x` and `y` since they are of different types.
+Q>>>>>>>>0:00:49.997319
+Assist me in implementing the mutator named SwitchInitExpr. Below is the description of its functionality:
+This mutator randomly selects a VarDecl and swaps its init expression with the init expression of another randomly selected VarDecl in the same scope, while ensuring the types of the variables are compatible.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:26.689163
+Here's an implementation of the `SwitchInitExpr` mutator.
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/Decl.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class SwitchInitExpr : public Mutator,
+                       public clang::RecursiveASTVisitor<SwitchInitExpr> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<SwitchInitExpr>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.clear();
+    TraverseAST(getASTContext());
+    if (TheVars.size() < 2) return false;
+
+    // Randomly select two VarDecls with the same type
+    VarDecl *var1 = randElement(TheVars);
+    VarDecl *var2 = nullptr;
+    std::vector<VarDecl *> candidates;
+
+    for (auto var : TheVars) {
+      if (var != var1 && var->getType().getCanonicalType() == var1->getType().getCanonicalType()) {
+        candidates.push_back(var);
+      }
+    }
+
+    if (candidates.empty()) return false;
+    var2 = randElement(candidates);
+
+    // Switch their init expressions
+    std::string init1 = getSourceText(var1->getInit()).str();
+    std::string init2 = getSourceText(var2->getInit()).str();
+    SourceLocation loc1 = getLocForEndOfToken(var1->getEndLoc());
+    SourceLocation loc2 = getLocForEndOfToken(var2->getEndLoc());
+
+    getRewriter().ReplaceText(SourceRange(var1->getInit()->getBeginLoc(), loc1), init2);
+    getRewriter().ReplaceText(SourceRange(var2->getInit()->getBeginLoc(), loc2), init1);
+
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (VD->hasInit()) {
+      TheVars.push_back(VD);
+    }
+    return true;
+  }
+
+private:
+  std::vector<clang::VarDecl *> TheVars;
+};
+
+static RegisterMutator<SwitchInitExpr> A("SwitchInitExpr", "Switch initialization expressions of two VarDecls.");
+```
+
+This implementation collects all variable declarations (`VarDecl`s) with initialization ("`VarDecl` hasInit") in `TraverseAST(getASTContext())`. It then randomly selects two of these `VarDecl`s with the same type and switches their initialization expressions using `getRewriter().ReplaceText()`. Please note that this implementation assumes that all variables are initialized in the same scope.
+
+Remember to test this implementation thoroughly, as it might not handle all edge cases correctly. For example, it doesn't check if the initialization expressions of the selected `VarDecl`s are valid for each other.
+Q>>>>>>>>0:01:51.147983
+Based on the results of your SwitchInitExpr implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘main’:
+output/output.c:6:5: error: expected ‘,’ or ‘;’ before ‘{’ token
+    6 |     {
+      |     ^
+
+```
+
+Input program:
+```
+#include<stdio.h>
+
+int main() {
+    int x = 5;
+
+    {
+        int y = 10;
+        printf("Inner scope - x: %d, y: %d\n", x, y);
+    }
+
+    printf("Outer scope - x: %d\n", x);
+  
+    return 0;
+}
+```
+
+Output program:
+```
+#include<stdio.h>
+
+int main() {
+    int x = 10
+
+    {
+        int y = 5
+        printf("Inner scope - x: %d, y: %d\n", x, y);
+    }
+
+    printf("Outer scope - x: %d\n", x);
+  
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,10 +1,10 @@
+ #include<stdio.h>
+ 
+ int main() {
+-    int x = 5;
++    int x = 10
+ 
+     {
+-        int y = 10;
++        int y = 5
+         printf("Inner scope - x: %d, y: %d\n", x, y);
+     }
+ 
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:37.110753
+It seems like the mutator is not correctly handling the semicolon (`;`) at the end of each variable declaration. This is causing the compiler to report syntax errors due to missing semicolons.
+
+To fix this issue, we should modify the way we replace the text, ensuring we include the trailing semicolon. This can be achieved by extending the source range to the end of the line (after the semicolon) when replacing the text. 
+
+Here is the updated implementation:
+
+```cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/Decl.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class SwitchInitExpr : public Mutator,
+                       public clang::RecursiveASTVisitor<SwitchInitExpr> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<SwitchInitExpr>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.clear();
+    TraverseAST(getASTContext());
+    if (TheVars.size() < 2) return false;
+
+    // Randomly select two VarDecls with the same type
+    VarDecl *var1 = randElement(TheVars);
+    VarDecl *var2 = nullptr;
+    std::vector<VarDecl *> candidates;
+
+    for (auto var : TheVars) {
+      if (var != var1 && var->getType().getCanonicalType() == var1->getType().getCanonicalType()) {
+        candidates.push_back(var);
+      }
+    }
+
+    if (candidates.empty()) return false;
+    var2 = randElement(candidates);
+
+    // Switch their init expressions
+    std::string init1 = getSourceText(var1->getInit()).str();
+    std::string init2 = getSourceText(var2->getInit()).str();
+    SourceLocation loc1 = getLocForEndOfToken(var1->getEndLoc());
+    SourceLocation loc2 = getLocForEndOfToken(var2->getEndLoc());
+
+    getRewriter().ReplaceText(SourceRange(var1->getInit()->getBeginLoc(), loc1), init2 + ";");
+    getRewriter().ReplaceText(SourceRange(var2->getInit()->getBeginLoc(), loc2), init1 + ";");
+
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (VD->hasInit()) {
+      TheVars.push_back(VD);
+    }
+    return true;
+  }
+
+private:
+  std::vector<clang::VarDecl *> TheVars;
+};
+
+static RegisterMutator<SwitchInitExpr> A("SwitchInitExpr", "Switch initialization expressions of two VarDecls.");
+```
+
+This updated implementation appends a semicolon to the end of each replaced initialization expression, ensuring the generated program is syntactically correct.

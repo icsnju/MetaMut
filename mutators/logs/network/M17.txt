@@ -1,0 +1,1331 @@
+
+Q>>>>>>>>0:00:00.000000
+You're working on a sophisticated task, creating a semantic-aware program mutator. We need to devise a new mutator for this purpose. 
+
+Below is a list of mutators I've already implemented. To avoid redundancy, please ensure your proposed mutator is distinct from these:
+```
+
+ChangeBinop: Change binary expression's operator.
+
+ChangeDeclRef: Change a DeclRefExpr's referenced variable.
+
+DuplicateBranch: Duplicates one branch of an if statement
+
+InverseLogicalExpr: Inverse logical expressions.
+
+SwapFuncDeclParams: Swap two parameters in a function declaration and its call sites
+
+ToggleReturnExpr: Toggle return expression to default value.
+
+```
+
+To aid in the development of a new mutator, consider manipulating the following elements through actions such as Addition, Modification, Combination, Copying, Decay, Inlining, Un-inlining, Duplication, Destruction, Grouping, Increase, Inversion, Lift, Mutation, Removal, Swap, Switch, or Toggle:
+Initialization, InitExpr, UnaryOperator, CharLiteral, IntegerLiteral, Type, Decl->getType, ReturnExpr, VarDecl, Scope, StmtExpr, FieldDecl, BinaryOperator, Stmt, CompoundStmt, IfStmt, GotoStmt, WhileStmt, WhileStmt->getCond, StringLiteral, PointerType, Parameter, ArrayDimension, PointerLevel, LogicalExpr, Branches, CaseStmt, LabelStmt, FunctionDecl, FunctionDecl.type, TypeConversion, ExprStmt.
+
+**Important Guidelines**:
+- Your response should detail only a single mutator.
+- The mutator should involve only one mutation operator (or verb) and one mutation target.
+- The response should adhere strictly to the following format, with no additional information:
+```
+ShuffleStmts: This mutator randomly selects a subset of consecutive statements from a CompoundStmt, shuffles them, and replaces the original ith stmt with the ith shuffled stmt.
+```
+A<<<<<<<<0:00:13.925994
+```
+IncreaseArrayDimension: This mutator randomly selects an ArrayType declaration, increments its dimension by 1, and initializes the new dimension with default values.
+```
+Q>>>>>>>>0:00:13.928049
+Assist me in identifying test cases that can effectively apply the mutator named IncreaseArrayDimension.
+
+**Important Guidelines**
+- Each test case should be presented in a separate code block.
+- Each test case should be a complete, compilable, runnable program.
+- Don't use C++ features
+A<<<<<<<<0:00:48.720109
+Sure, here are some example test cases for the `IncreaseArrayDimension` mutator:
+
+**Test Case 1: Testing on a Single Dimension Array**
+
+```c
+#include <stdio.h>
+
+int main() {
+    int arr[5] = {1, 2, 3, 4, 5};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%d\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+**Test Case 2: Testing on a Multi-Dimension Array**
+
+```c
+#include <stdio.h>
+
+int main() {
+    int arr[2][3] = {{1, 2, 3}, {4, 5, 6}};
+
+    for(int i = 0; i < 2; i++) {
+        for(int j = 0; j < 3; j++) {
+            printf("%d ", arr[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+```
+
+**Test Case 3: Testing on an Array of Characters**
+
+```c
+#include <stdio.h>
+
+int main() {
+    char arr[5] = {'a', 'b', 'c', 'd', 'e'};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%c\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+**Test Case 4: Testing on an Array of Floats**
+
+```c
+#include <stdio.h>
+
+int main() {
+    float arr[4] = {1.1, 2.2, 3.3, 4.4};
+
+    for(int i = 0; i < 4; i++) {
+        printf("%.1f\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+All these test cases contain array declarations. The `IncreaseArrayDimension` mutator should be able to select these declarations and increase their dimension.
+Q>>>>>>>>0:00:48.726968
+Assist me in implementing the mutator named IncreaseArrayDimension. Below is the description of its functionality:
+This mutator randomly selects an ArrayType declaration, increments its dimension by 1, and initializes the new dimension with default values.
+```
+
+You can utilize below's two example implementation as a reference:
+
+Example implementation for mutator ChangeDeclRef.
+```cpp
+// ChangeDeclRef.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeDeclRef : public Mutator,
+                      public clang::RecursiveASTVisitor<ChangeDeclRef> {
+
+  using VisitorTy = clang::RecursiveASTVisitor<ChangeDeclRef>;
+
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TheVars.push_back({});
+    TraverseAST(getASTContext());
+    if (TheRefs.empty() || TheVars.empty()) return false;
+
+    DeclRefExpr *ref = randElement(TheRefs);
+    if (!isa<VarDecl>(ref->getDecl()))
+      return false; // Ensure the Decl is actually a VarDecl
+
+    VarDecl *oldVar = cast<VarDecl>(ref->getDecl());
+    if (ExprVarsMap[ref].size() == 0) return false;
+
+    VarDecl *newVar = randElement(ExprVarsMap[ref]);
+    if (oldVar == newVar) return false;
+
+    // Replace the old variable with the new one
+    getRewriter().ReplaceText(ref->getSourceRange(), newVar->getNameAsString());
+
+    return true;
+  }
+
+  bool VisitDeclRefExpr(clang::DeclRefExpr *DRE) {
+    if (isMutationSite(DRE)) {
+      TheRefs.push_back(DRE);
+      ExprVarsMap[DRE] = TheVars.back();
+    }
+    return true;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *VD) {
+    if (!TheVars.empty()) { TheVars.back().push_back(VD); }
+    return true;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *CS) {
+    if (!TheVars.empty()) {
+      // Push a copy of the current set of variables
+      TheVars.push_back(TheVars.back());
+    } else {
+      // Create the first set of variables
+      TheVars.push_back({});
+    }
+
+    VisitorTy::TraverseCompoundStmt(CS);
+    TheVars.pop_back();
+    return true;
+  }
+
+  bool TraverseFunctionDecl(clang::FunctionDecl *FD) {
+    TheVars.push_back(TheVars.back());
+    VisitorTy::TraverseFunctionDecl(FD);
+    TheVars.pop_back();
+    return true;
+  }
+
+private:
+  std::map<clang::DeclRefExpr *, std::vector<clang::VarDecl *>> ExprVarsMap;
+  std::vector<clang::DeclRefExpr *> TheRefs;
+  std::vector<std::vector<clang::VarDecl *>> TheVars;
+};
+
+static RegisterMutator<ChangeDeclRef> M(
+    "ChangeDeclRef", "Change a DeclRefExpr's referenced variable.");
+```
+
+Example implementation for mutator ChangeBinop.
+```cpp
+// ChangeBinop.cpp
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class ChangeBinop
+    : public Mutator,
+      public clang::RecursiveASTVisitor<ChangeBinop> {
+public:
+  using Mutator::Mutator;
+  bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheOperators.empty()) return false;
+
+    BinaryOperator *expr = randElement(TheOperators);
+
+    // perform rewrite
+    auto newOps = computeValidAlternatives(expr);
+    BinaryOperatorKind newOpKind = newOps[randIndex(newOps.size())];
+    SourceLocation OpLoc = expr->getOperatorLoc();
+    std::string NewOp = BinaryOperator::getOpcodeStr(newOpKind).str();
+    getRewriter().ReplaceText(
+        OpLoc, expr->getOpcodeStr(expr->getOpcode()).size(), NewOp);
+
+    return true;
+  }
+
+  bool VisitBinaryOperator(clang::BinaryOperator *BO) {
+    TheOperators.push_back(BO);
+    return true;
+  }
+
+private:
+  std::vector<clang::BinaryOperator *> TheOperators;
+
+  std::vector<clang::BinaryOperatorKind> computeValidAlternatives(
+      clang::BinaryOperator *op) {
+    std::vector<BinaryOperatorKind> validAlternatives;
+
+    Expr *lhs = op->getLHS();
+    Expr *rhs = op->getRHS();
+    SourceLocation loc = op->getExprLoc();
+
+    auto &sema = getCompilerInstance().getSema();
+    for (int i = BO_PtrMemD; i <= BO_Comma; ++i) {
+      if (i == BO_PtrMemD || i == BO_PtrMemI || i == BO_Cmp ||
+          i == op->getOpcode())
+        continue;
+      BinaryOperatorKind kind = static_cast<BinaryOperatorKind>(i);
+      ExprResult result = sema.CreateBuiltinBinOp(loc, kind, lhs, rhs);
+
+      if (!result.isInvalid()) validAlternatives.push_back(kind);
+    }
+
+    return validAlternatives;
+  }
+};
+
+static RegisterMutator<ChangeBinop> M(
+    "ChangeBinop", "Change binary expression's operator.");
+```
+
+Consider using the following APIs for easier implementation:
+```
+* getASTContext()
+* getCompilerInstance()
+* getCompilerInstance().getSema()
+* getMostRecentTranslationUnitDecl(clang::FunctionDecl *)
+* std::string formatAsDecl(clang::QualType ty, const std::string &placeholder)
+* clang::SourceRange getExpansionRange(clang::SourceRange range)
+* clang::SourceLocation getLocForEndOfToken(clang::SourceLocation loc)
+* clang::SourceLocation findStringLocationFrom(clang::SourceLocation beginLoc, llvm::StringRef target)
+* clang::SourceRange findBracesRange(clang::SourceLocation beginLoc, char beginBrace = '(', char endBrace = ')')
+* template <class NodeType> llvm::StringRef getSourceText(const NodeType *node)
+* getSourceText().str()
+* getManager().getRandomGenerator()
+* unsigned randIndex(unsigned n)
+* bool randBool();
+* template <typename Container> auto &randElement(Container &container) 
+* std::string generateUniqueName(const std::string &baseName)
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:01:37.726969
+Sure, based on the examples and the guidelines you provided, I can propose an implementation for the IncreaseArrayDimension mutator. 
+
+This mutator will:
+1. Traverse the AST to find ArrayType declarations.
+2. Select one of them randomly.
+3. Increase its dimension by 1.
+4. Initialize the new dimension with default values.
+
+Here is the implementation:
+
+```cpp
+// IncreaseArrayDimension.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/ASTContext.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class IncreaseArrayDimension : public Mutator,
+                               public clang::RecursiveASTVisitor<IncreaseArrayDimension> {
+public:
+    using Mutator::Mutator;
+    bool mutate() override {
+        TraverseAST(getASTContext());
+        if (TheArrays.empty()) return false;
+
+        VarDecl *arr = randElement(TheArrays);
+
+        // Get the type name without array dimensions
+        std::string typeName = arr->getType().getAsString();
+        typeName = typeName.substr(0, typeName.find('['));
+
+        // Increase the dimension by 1
+        getRewriter().ReplaceText(
+            arr->getSourceRange(),
+            typeName + " " + arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+        );
+
+        // Initialize the new dimension with default values
+        getRewriter().InsertTextAfter(
+            getLocForEndOfToken(arr->getEndLoc()), 
+            " = {" + formatAsDecl(arr->getType(), "{}") + "}"
+        );
+
+        return true;
+    }
+
+    bool VisitVarDecl(clang::VarDecl *VD) {
+        if (VD->getType()->isArrayType() && isMutationSite(VD)) {
+            TheArrays.push_back(VD);
+        }
+        return true;
+    }
+
+private:
+    std::vector<clang::VarDecl *> TheArrays;
+};
+
+static RegisterMutator<IncreaseArrayDimension> M(
+    "IncreaseArrayDimension", "Increase the dimension of an array declaration.");
+```
+This code assumes that the `formatAsDecl` function is capable of generating a valid initializer list for the array's type.
+
+Please note that this is a simple implementation and might not work perfectly for complex types or in all situations. For example, it doesn't handle multi-dimensional arrays or arrays with non-default initializers. Also, the generated code may not compile if the array's type doesn't have a default constructor.
+Q>>>>>>>>0:02:00.529534
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘main’:
+output/output.c:4:24: error: expected expression before ‘char’
+    4 |     char  arr[1][5] = {char {}[5]};
+      |                        ^~~~
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+int main() {
+    char arr[5] = {'a', 'b', 'c', 'd', 'e'};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%c\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+int main() {
+    char  arr[1][5] = {char {}[5]};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%c\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,7 +1,7 @@
+ #include <stdio.h>
+ 
+ int main() {
+-    char arr[5] = {'a', 'b', 'c', 'd', 'e'};
++    char  arr[1][5] = {char {}[5]};
+ 
+     for(int i = 0; i < 5; i++) {
+         printf("%c\n", arr[i]);
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:02:39.645629
+From the error message it's clear the problem is with the initializer. The `formatAsDecl` function seems to include the type in the initializer, which is not valid syntax. In C and C++, you only need the braces `{}` to initialize an array, not the type. Also, for a multidimensional array of char, we need to initialize it properly.
+
+Let's adjust the mutator to reflect these changes:
+
+```cpp
+// IncreaseArrayDimension.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/ASTContext.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class IncreaseArrayDimension : public Mutator,
+                               public clang::RecursiveASTVisitor<IncreaseArrayDimension> {
+public:
+    using Mutator::Mutator;
+    bool mutate() override {
+        TraverseAST(getASTContext());
+        if (TheArrays.empty()) return false;
+
+        VarDecl *arr = randElement(TheArrays);
+
+        // Get the type name without array dimensions
+        std::string typeName = arr->getType().getAsString();
+        typeName = typeName.substr(0, typeName.find('['));
+
+        // Increase the dimension by 1
+        getRewriter().ReplaceText(
+            arr->getSourceRange(),
+            typeName + " " + arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+        );
+
+        // Initialize the new dimension with default values
+        getRewriter().InsertTextAfter(
+            getLocForEndOfToken(arr->getEndLoc()), 
+            " = {" + "{}" + "}"
+        );
+
+        return true;
+    }
+
+    bool VisitVarDecl(clang::VarDecl *VD) {
+        if (VD
+Q>>>>>>>>0:02:39.660178
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The mutator is transforming a semantically valid program into an invalid one.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+output/output.c: In function ‘main’:
+output/output.c:4:24: error: expected expression before ‘char’
+    4 |     char  arr[1][5] = {char {}[5]};
+      |                        ^~~~
+
+```
+
+Input program:
+```
+#include <stdio.h>
+
+int main() {
+    char arr[5] = {'a', 'b', 'c', 'd', 'e'};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%c\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+Output program:
+```
+#include <stdio.h>
+
+int main() {
+    char  arr[1][5] = {char {}[5]};
+
+    for(int i = 0; i < 5; i++) {
+        printf("%c\n", arr[i]);
+    }
+
+    return 0;
+}
+```
+
+Difference between the input and output programs:
+```
+--- output/input.c
++++ output/output.c
+@@ -1,7 +1,7 @@
+ #include <stdio.h>
+ 
+ int main() {
+-    char arr[5] = {'a', 'b', 'c', 'd', 'e'};
++    char  arr[1][5] = {char {}[5]};
+ 
+     for(int i = 0; i < 5; i++) {
+         printf("%c\n", arr[i]);
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:03:40.895529
+I see what's happening here. The issue arises from the initialization of the array in the mutated program. The generated initialization code is `char {}[5]` which is not valid C syntax. 
+
+We need to initialize the new dimension correctly. In this case, the new dimension is a 1-D array of `char`, so it should be initialized as `{'\0'}`.
+
+Additionally, the array index in the `printf` statement needs to be updated to reflect the increased array dimension.
+
+Here's the updated implementation:
+
+```cpp
+// IncreaseArrayDimension.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/ASTContext.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class IncreaseArrayDimension : public Mutator,
+                               public clang::RecursiveASTVisitor<IncreaseArrayDimension> {
+public:
+    using Mutator::Mutator;
+    bool mutate() override {
+        TraverseAST(getASTContext());
+        if (TheArrays.empty()) return false;
+
+        VarDecl *arr = randElement(TheArrays);
+
+        // Get the type name without array dimensions
+        std::string typeName = arr->getType().getAsString();
+        typeName = typeName.substr(0, typeName.find('['));
+
+        // Increase the dimension by 1
+        getRewriter().ReplaceText(
+            arr->getSourceRange(),
+            arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+        );
+
+        // Initialize the new dimension with default values
+        getRewriter().InsertTextAfter(
+            getLocForEndOfToken(arr->getEndLoc()), 
+            " = {{" + formatAsDecl(arr->getType(), "'\\0'") + "}}"
+        );
+
+        // Update all the places where this array is used
+        for (auto usage : TheArrayUsages[arr]) {
+            std::string oldText = getSourceText(usage);
+            std::string newText = oldText + "[0]";  // Add [0] to every usage
+            getRewriter().ReplaceText(usage.getSourceRange(), newText);
+        }
+
+        return true;
+    }
+
+    bool VisitVarDecl(VarDecl *VD) {
+        if (VD->getType()->isArrayType() && isMutationSite(VD)) {
+            TheArrays.push_back(VD);
+        }
+        return true;
+    }
+
+    bool VisitArraySubscriptExpr(ArraySubscriptExpr *ASE) {
+        if (VarDecl *VD = llvm::dyn_cast<VarDecl>(ASE->getBase()->IgnoreParenImpCasts()->getStmtClass())) {
+            TheArrayUsages[VD].push_back(ASE);
+        }
+        return true;
+    }
+
+private:
+    std::vector<VarDecl *> TheArrays;
+    std::map<VarDecl *, std::vector<ArraySubscriptExpr *>> TheArrayUsages;
+};
+
+static RegisterMutator<IncreaseArrayDimension> M(
+    "IncreaseArrayDimension", "Increase the dimension of an array declaration.");
+```
+
+This version of the mutator also visits `ArraySubscriptExpr` nodes and records them in `TheArrayUsages` map if they are using any of the target arrays. It then updates these usages in the `mutate` function. This ensures that the program remains semantically valid after the mutation. The new index `[0]` is added to every usage of the array.
+
+Please note, however, that this implementation is simplistic and might not handle all cases. For example, it assumes that the array is only used in `ArraySubscriptExpr`s. It might not work correctly if the array is passed to a function, used in a structure, etc.
+Q>>>>>>>>0:03:48.559522
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp: In member function ‘virtual bool IncreaseArrayDimension::mutate()’:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: error: conversion from ‘llvm::StringRef’ to non-scalar type ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} requested
+   41 |             std::string oldText = getSourceText(usage);
+      |                                   ~~~~~~~~~~~~~^~~~~~~
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:43:45: error: request for member ‘getSourceRange’ in ‘usage’, which is of pointer type ‘clang::ArraySubscriptExpr*’ (maybe you meant to use ‘->’ ?)
+   43 |             getRewriter().ReplaceText(usage.getSourceRange(), newText);
+      |                                             ^~~~~~~~~~~~~~
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp: In member function ‘bool IncreaseArrayDimension::VisitArraySubscriptExpr(clang::ArraySubscriptExpr*)’:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:57:50: error: no matching function for call to ‘dyn_cast<clang::VarDecl>(clang::Stmt::StmtClass)’
+   57 |         if (VarDecl *VD = llvm::dyn_cast<VarDecl>(ASE->getBase()->IgnoreParenImpCasts()->getStmtClass())) {
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/lib/llvm-12/include/clang/Basic/LLVM.h:21,
+                 from /usr/lib/llvm-12/include/clang/AST/AttrIterator.h:16,
+                 from /usr/lib/llvm-12/include/clang/AST/Attr.h:17,
+                 from /usr/lib/llvm-12/include/clang/AST/RecursiveASTVisitor.h:16,
+                 from MetaMut/lib/mutators/IncreaseArrayDimension.cpp:2:
+/usr/lib/llvm-12/include/llvm/Support/Casting.h:334:1: note: candidate: ‘template<class X, class Y> std::enable_if_t<(! llvm::is_simple_type<Y>::value), typename llvm::cast_retty<X, const Y>::ret_type> llvm::dyn_cast(const Y&)’
+  334 | dyn_cast(const Y &Val) {
+      | ^~~~~~~~
+/usr/lib/llvm-12/include/llvm/Support/Casting.h:334:1: note:   template argument deduction/substitution failed:
+compilation terminated due to -fmax-errors=3.
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:146: CMakeFiles/MetaMut.dir/lib/mutators/IncreaseArrayDimension.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:04:34.631457
+I apologize for the previous errors. Let's correct them:
+
+1. `getSourceText(usage)` returns a `llvm::StringRef`, we need to convert it to `std::string`.
+2. `usage` is a pointer in `ReplaceText(usage.getSourceRange(), newText)`, we need to dereference it to get the source range: `usage->getSourceRange()`.
+3. The usage of `llvm::dyn_cast<VarDecl>` is incorrect, `ASE->getBase()->IgnoreParenImpCasts()` gets us an `Expr*` which needs to be casted to `DeclRefExpr*` before we can get the `VarDecl*`.
+
+Here's the corrected implementation:
+
+```cpp
+// IncreaseArrayDimension.cpp
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Stmt.h>
+#include <clang/AST/ASTContext.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Sema/Sema.h>
+
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+class IncreaseArrayDimension : public Mutator,
+                               public clang::RecursiveASTVisitor<IncreaseArrayDimension> {
+public:
+    using Mutator::Mutator;
+    bool mutate() override {
+        TraverseAST(getASTContext());
+        if (TheArrays.empty()) return false;
+
+        VarDecl *arr = randElement(TheArrays);
+
+        // Get the type name without array dimensions
+        std::string typeName = arr->getType().getAsString();
+        typeName = typeName.substr(0, typeName.find('['));
+
+        // Increase the dimension by 1
+        getRewriter().ReplaceText(
+            arr->getSourceRange(),
+            arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+        );
+
+        // Initialize the new dimension with default values
+        getRewriter().InsertTextAfter(
+            getLocForEndOfToken(arr->getEndLoc()), 
+            " = {{" + formatAsDecl(arr->getType(), "'\\0'") + "}}"
+        );
+
+        // Update all the places where this array is used
+        for (auto usage : TheArrayUsages[arr]) {
+            std::string oldText = getSourceText(*usage).str();
+            std::string newText = oldText + "[0]";  // Add [0] to every usage
+            getRewriter().ReplaceText(usage->getSourceRange(), newText);
+        }
+
+        return true;
+    }
+
+    bool VisitVarDecl(VarDecl *VD) {
+        if (VD->getType()->isArrayType() && isMutationSite(VD)) {
+            TheArrays.push_back(VD);
+        }
+        return true;
+    }
+
+    bool VisitArraySubscriptExpr(ArraySubscriptExpr *ASE) {
+        if (auto *DRE = llvm::dyn_cast<DeclRefExpr>(ASE->getBase()->IgnoreParenImpCasts())) {
+            if (auto *VD = llvm::dyn_cast<VarDecl>(DRE->getDecl())) {
+                TheArrayUsages[VD].push_back(ASE);
+            }
+        }
+        return true;
+    }
+
+private:
+    std::vector<VarDecl *> TheArrays;
+    std::map<VarDecl *, std::vector<ArraySubscriptExpr *>> TheArrayUsages;
+};
+
+static RegisterMutator<IncreaseArrayDimension> M(
+    "IncreaseArrayDimension", "Increase the dimension of an array declaration.");
+```
+
+This should solve the compilation issues. The `mutate` function now correctly handles the transformation of array usage, and the `VisitArraySubscriptExpr` function correctly identifies the `VarDecl` of the array being used.
+Q>>>>>>>>0:04:45.131876
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp: In member function ‘virtual bool IncreaseArrayDimension::mutate()’:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: error: no matching function for call to ‘IncreaseArrayDimension::getSourceText(clang::ArraySubscriptExpr&)’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+In file included from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/IncreaseArrayDimension.cpp:8:
+MetaMut/include/Mutator.h:125:19: note: candidate: ‘template<class NodeType> llvm::StringRef ysmut::Mutator::getSourceText(const NodeType*)’
+  125 |   llvm::StringRef getSourceText(const NodeType *node) {
+      |                   ^~~~~~~~~~~~~
+MetaMut/include/Mutator.h:125:19: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: note:   mismatched types ‘const NodeType*’ and ‘clang::ArraySubscriptExpr’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:146: CMakeFiles/MetaMut.dir/lib/mutators/IncreaseArrayDimension.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:05:17.224282
+The error message indicates that the function `getSourceText` cannot accept a dereferenced pointer `*usage` of type `clang::ArraySubscriptExpr`. This is because `getSourceText` expects a pointer as its argument, not a dereferenced object.
+
+We can fix this error by passing `usage`, which is a pointer, directly to `getSourceText` without dereferencing it. Here's the corrected `mutate()` function:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheArrays.empty()) return false;
+
+    VarDecl *arr = randElement(TheArrays);
+
+    // Get the type name without array dimensions
+    std::string typeName = arr->getType().getAsString();
+    typeName = typeName.substr(0, typeName.find('['));
+
+    // Increase the dimension by 1
+    getRewriter().ReplaceText(
+        arr->getSourceRange(),
+        arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+    );
+
+    // Initialize the new dimension with default values
+    getRewriter().InsertTextAfter(
+        getLocForEndOfToken(arr->getEndLoc()), 
+        " = {{" + formatAsDecl(arr->getType(), "'\\0'") + "}}"
+    );
+
+    // Update all the places where this array is used
+    for (auto usage : TheArrayUsages[arr]) {
+        std::string oldText = getSourceText(usage).str();
+        std::string newText = oldText + "[0]";  // Add [0] to every usage
+        getRewriter().ReplaceText(usage->getSourceRange(), newText);
+    }
+
+    return true;
+}
+```
+
+The rest of the code remains unchanged. Please try compiling with these adjustments.
+Q>>>>>>>>0:05:17.232753
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp: In member function ‘virtual bool IncreaseArrayDimension::mutate()’:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: error: no matching function for call to ‘IncreaseArrayDimension::getSourceText(clang::ArraySubscriptExpr&)’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+In file included from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/IncreaseArrayDimension.cpp:8:
+MetaMut/include/Mutator.h:125:19: note: candidate: ‘template<class NodeType> llvm::StringRef ysmut::Mutator::getSourceText(const NodeType*)’
+  125 |   llvm::StringRef getSourceText(const NodeType *node) {
+      |                   ^~~~~~~~~~~~~
+MetaMut/include/Mutator.h:125:19: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: note:   mismatched types ‘const NodeType*’ and ‘clang::ArraySubscriptExpr’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:146: CMakeFiles/MetaMut.dir/lib/mutators/IncreaseArrayDimension.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:05:55.227519
+I apologize for the confusion. The previous response contained an error. The `getSourceText()` method is expecting a pointer to a `NodeType` object, but it's receiving a dereferenced `usage` object of type `clang::ArraySubscriptExpr`. You're supposed to pass the pointer `usage` directly to `getSourceText()`. 
+
+Here's the corrected `mutate()` function:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheArrays.empty()) return false;
+
+    VarDecl *arr = randElement(TheArrays);
+
+    // Get the type name without array dimensions
+    std::string typeName = arr->getType().getAsString();
+    typeName = typeName.substr(0, typeName.find('['));
+
+    // Increase the dimension by 1
+    getRewriter().ReplaceText(
+        arr->getSourceRange(),
+        arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+    );
+
+    // Initialize the new dimension with default values
+    getRewriter().InsertTextAfter(
+        getLocForEndOfToken(arr->getEndLoc()), 
+        " = {{" + formatAsDecl(arr->getType(), "'\\0'") + "}}"
+    );
+
+    // Update all the places where this array is used
+    for (auto usage : TheArrayUsages[arr]) {
+        std::string oldText = getSourceText(usage).str(); // Corrected
+        std::string newText = oldText + "[0]";  // Add [0] to every usage
+        getRewriter().ReplaceText(usage->getSourceRange(), newText);
+    }
+
+    return true;
+}
+```
+
+Please compile again with this corrected code.
+Q>>>>>>>>0:05:55.234912
+Based on the results of your IncreaseArrayDimension implementation, we have encountered an issue:
+
+The implemented mutator is not compiling.
+
+To aid in troubleshooting, please find the relevant information below:
+
+Compilation errors:
+```
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp: In member function ‘virtual bool IncreaseArrayDimension::mutate()’:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: error: no matching function for call to ‘IncreaseArrayDimension::getSourceText(clang::ArraySubscriptExpr&)’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+In file included from MetaMut/include/MutatorManager.h:11,
+                 from MetaMut/lib/mutators/IncreaseArrayDimension.cpp:8:
+MetaMut/include/Mutator.h:125:19: note: candidate: ‘template<class NodeType> llvm::StringRef ysmut::Mutator::getSourceText(const NodeType*)’
+  125 |   llvm::StringRef getSourceText(const NodeType *node) {
+      |                   ^~~~~~~~~~~~~
+MetaMut/include/Mutator.h:125:19: note:   template argument deduction/substitution failed:
+MetaMut/lib/mutators/IncreaseArrayDimension.cpp:41:48: note:   mismatched types ‘const NodeType*’ and ‘clang::ArraySubscriptExpr’
+   41 |             std::string oldText = getSourceText(*usage).str();
+      |                                   ~~~~~~~~~~~~~^~~~~~~~
+make[2]: *** [CMakeFiles/MetaMut.dir/build.make:146: CMakeFiles/MetaMut.dir/lib/mutators/IncreaseArrayDimension.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/MetaMut.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+
+```
+
+Ensure your code is complete, functional, and free of pseudo code. You may use the following template as a reference:
+```
+{Includes}
+
+#include "Mutator.h"
+#include "MutatorManager.h"
+
+using namespace clang;
+using namespace ysmut;
+
+// this is mutator
+class {MutatorName} : public Mutator,
+                      public clang::RecursiveASTVisitor<{MutatorName}> {
+  using Mutator::Mutator;
+
+  bool {Visitor}({NodeType}) {
+    /* Step 2, Collect mutation instances */ }
+
+  bool mutate() override {
+    // Step 1, Traverse the AST
+    // Step 3, Randomly select a mutation instance
+    // Step 4, Checking mutation validity
+    // Step 5, Perform mutation
+    // Step 6, Return true if changed
+  }
+
+private:
+  {VarsToStoreMutationInstances}
+  // note, you may use multiple vars to store a mutation instance
+  // for example, if you want to remove a function, you may
+  // 1. use TheFuncs to store all functions
+  // 2. use map<FuncDecl, CallExpr> to store all functions' corresponding call exprs
+};
+
+static RegisterMutator<{MutatorName}> M(
+    "{MutatorName}", "{DetailedMutatorDescription}");
+```
+
+**Important Notes**
+- Your response should be a code box containing your mutator implementation.
+- Do not leave any code unimplemented.
+- Your implementation should follow the format of the provided example.
+
+**Notes about counterintuitive clang API**
+- Don't use operator new for creating AST nodes.
+- Perform mutations only inside mutate, using TraverseXXX or VisitXXX for node collection.
+- Use Rewriter for AST modifications, direct changes aren't allowed.
+- For inserting after a statement A, use ReplaceText(A.getSourceRange(), getSourceText(A).str() + Delim + InsertedSource), not InsertAfter.
+- To insert before FunctionDecl A, use InsertTextBefore(getMostRecentTranslationUnitDecl(A)->getBeginLoc(), ...), not InsertTextBefore(A->getBeginLoc(), ...).
+- Use formatAsDecl(type, id) for declaration printing, not string concatenation.
+- Replacements for VarDecl A shouldn't have type specifiers, as A->getSourceRange() excludes them.
+- To insert after VarDecl A, use InsertTextAfter(getLocForEndOfToken(A->getEndLoc())), not InsertTextAfter(A->getEndLoc()).
+- Avoid inserting at A->getBeginLoc() of FunctionDecl/VarDecl A or replacing A->getSourceRange as type specifier not in that range.
+A<<<<<<<<0:06:34.916281
+My apologies for the misunderstanding. The correct way to call `getSourceText()` is indeed by passing a pointer to it. The error indicates that `usage` is a pointer to `clang::ArraySubscriptExpr`, so you should pass `usage` directly to `getSourceText` without dereferencing it.
+
+Here's the corrected `mutate()` function:
+
+```cpp
+bool mutate() override {
+    TraverseAST(getASTContext());
+    if (TheArrays.empty()) return false;
+
+    VarDecl *arr = randElement(TheArrays);
+
+    // Get the type name without array dimensions
+    std::string typeName = arr->getType().getAsString();
+    typeName = typeName.substr(0, typeName.find('['));
+
+    // Increase the dimension by 1
+    getRewriter().ReplaceText(
+        arr->getSourceRange(),
+        arr->getNameAsString() + "[1]" + arr->getType().getAsString().substr(typeName.length())
+    );
+
+    // Initialize the new dimension with default values
+    getRewriter().InsertTextAfter(
+        getLocForEndOfToken(arr->getEndLoc()), 
+        " = {{" + formatAsDecl(arr->getType(), "'\\0'") + "}}"
+    );
+
+    // Update all the places where this array is used
+    for (auto usage : TheArrayUsages[arr]) {
+        std::string oldText = getSourceText(usage).str(); // Corrected here
+        std::string newText = oldText + "[0]";  // Add [0] to every usage
+        getRewriter().ReplaceText(usage->getSourceRange(), newText);
+    }
+
+    return true;
+}
+```
+
+Please compile again with this corrected code.======= 2023-10-06 00:45:03.653827 =======
+Traceback (most recent call last):
+  File "MetaMut/scripts/main.py", line 51, in test_gpt
+    mg.run()
+  File "MetaMut/scripts/MetaMut.py", line 288, in run
+    impl = self.refine(impl, examples)
+  File "MetaMut/scripts/MetaMut.py", line 276, in refine
+    impl = self.query('RefineMutator')
+  File "MetaMut/scripts/MetaMut.py", line 260, in query
+    raise ExceedMaxRetryQueryTimes()
+MetaMut.ExceedMaxRetryQueryTimes

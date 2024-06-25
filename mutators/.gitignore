@@ -1,0 +1,6 @@
+output/
+*.[oO]
+*.out
+*.log
+*.output
+!logs/

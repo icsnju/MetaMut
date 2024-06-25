@@ -1,0 +1,8 @@
+{
+  "__afl_bbmap_ptr";
+  "__afl_fnmap_ptr";
+  "__afl_trace_bb";
+  "__afl_trace_fn";
+  "__afl_auto_init";
+  "LLVMFuzzerTestOneInput";
+};

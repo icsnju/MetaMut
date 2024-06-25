@@ -1,0 +1,141 @@
+## Reported Bugs
+
+### Clang
+
+- [69070](https://github.com/llvm/llvm-project/issues/69070) - clang: Assertion `StackTop == (unsigned)llvm::popcount(Mask) && "Live count mismatch"' failed.
+- [69202](https://github.com/llvm/llvm-project/issues/69202) - clang: Assertion `Value != 0 && "Invalid CPUStr passed to CpuIs"' failed.
+- [69212](https://github.com/llvm/llvm-project/issues/69212) - clang: Assertion `ConstraintID != InlineAsm::ConstraintCode::Unknown && "Failed to convert memory constraint code to constraint id."' failed.
+- [69217](https://github.com/llvm/llvm-project/issues/69217) - clang: fatal error: error in backend: register rbp is allocatable: function has no frame pointer
+- [69347](https://github.com/llvm/llvm-project/issues/69347) - clang: 18: segment fault in `llvm::SelectionDAGISel::CannotYetSelect(llvm::SDNode\*)`
+- [69201](https://github.com/llvm/llvm-project/issues/69201) - clang: fatal error: error in backend: Cannot emit physreg copy instruction
+- [73109](https://github.com/llvm/llvm-project/issues/73109) - clang: 18: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+- [62984](https://github.com/llvm/llvm-project/issues/62984) - clang-17 crashes at llvm::SelectionDAGISel::Select\_READ\_REGISTER
+- [62987](https://github.com/llvm/llvm-project/issues/62987) - clangtk fatal error: cannot pop empty stack
+- [63027](https://github.com/llvm/llvm-project/issues/63027) - clangtk crashes at ::FPS::processBasicBlock
+- [63028](https://github.com/llvm/llvm-project/issues/63028) - clangtk crashes at llvm::X86InstrInfo::copyPhysReg
+- [63032](https://github.com/llvm/llvm-project/issues/63032) - `clangtk` crashes at llvm::SelectionDAGISel::SelectInlineAsmMemoryOperands
+- [63569](https://github.com/llvm/llvm-project/issues/63569) - clang crashes when all `xmm` registers are clobbered
+- [62997](https://github.com/llvm/llvm-project/issues/62997) - clang-17 crashes at llvm::SelectionDAG::getNode
+- [62989](https://github.com/llvm/llvm-project/issues/62989) - clang-17 crashes at CodeGen::CodeGenFunction::EmitAtomicExpr
+- [62999](https://github.com/llvm/llvm-project/issues/62999) - clang-17 crashes at clang::CodeGen::CodeGenFunction::EmitFunctionProlog
+- [63001](https://github.com/llvm/llvm-project/issues/63001) - Assertion `S1->getType() == S2->getType() && "Cannot create binary operator with two operands of differing type!"' failed.
+- [63002](https://github.com/llvm/llvm-project/issues/63002) - clangtk: Assertion `!isNull() && "Cannot retrieve a NULL type pointer"' failed.
+- [63516](https://github.com/llvm/llvm-project/issues/63516) - `clangtk`: Assertion `isValidGCCRegisterName(Name) && "Invalid register passed in"' failed
+- [63517](https://github.com/llvm/llvm-project/issues/63517) - `clangtk`: Assertion `E->isPRValue() && E->getType()->hasPointerRepresentation()' failed
+- [63521](https://github.com/llvm/llvm-project/issues/63521) - `clangtk`: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+- [63528](https://github.com/llvm/llvm-project/issues/63528) - `clangtk`: fatal error: error in backend: Broken function found, compilation aborted!
+- [63548](https://github.com/llvm/llvm-project/issues/63548) - clang: Assertion `castIsValid(op, S, Ty) && "Invalid cast!"' failed.
+- [63566](https://github.com/llvm/llvm-project/issues/63566) - clang: Assertion `Prior->FD->hasAttr<NoUniqueAddressAttr>() && "should not have reused this field's tail padding"' failed.
+- [63568](https://github.com/llvm/llvm-project/issues/63568) - clang: Assertion `Value != 0 && "Invalid CPUStr passed to CpuIs"' failed.
+- [63601](https://github.com/llvm/llvm-project/issues/63601) - clang: Assertion `SizeSoFar == Layout->getSizeInBytes() && "Layout of constant struct may be incorrect!"' failed.
+- [63620](https://github.com/llvm/llvm-project/issues/63620) - `clang`: Assertion `E->isNonOdrUse() != NOUR\_Unevaluated && "should not emit an unevaluated operand"' failed.
+- [63943](https://github.com/llvm/llvm-project/issues/63943) - [OpenMP] clang crashes: UNREACHABLE executed at /root/llvm-project/clang/lib/CodeGen/CGOpenMPRuntime.cpp:251!
+- [63945](https://github.com/llvm/llvm-project/issues/63945) - clang: Assertion `!Info.isIncomplete() && "Access to an object of an incomplete type!"' failed.
+- [69054](https://github.com/llvm/llvm-project/issues/69054) - clang: Assertion `isValidGCCRegisterName(Name) && "Invalid register passed in"' failed
+- [69055](https://github.com/llvm/llvm-project/issues/69055) - clang: Assertion `IsValid && "Failed to parse output constraint"' failed.
+- [69063](https://github.com/llvm/llvm-project/issues/69063) - clang: fatal error: error in backend: Broken module found, compilation aborted!
+- [69066](https://github.com/llvm/llvm-project/issues/69066) - clang -O1: fatal error: error in backend: Broken module found, compilation aborted!
+- [69071](https://github.com/llvm/llvm-project/issues/69071) - clang: Assertion `castIsValid(op, S, Ty) && "Invalid cast!"' failed.
+- [69220](https://github.com/llvm/llvm-project/issues/69220) - clang: crash at clang::CodeGen::CodeGenFunction::EmitAtomicExpr
+- [63547](https://github.com/llvm/llvm-project/issues/63547) - `clangtk`: Assertion `NumBits >= MIN\_INT\_BITS && "bitwidth too small"' failed.
+- [63306](https://github.com/llvm/llvm-project/issues/63306) - `clangtk`: Assertion `NumBits <= MAX\_INT\_BITS && "bitwidth too large"' failed.
+- [63550](https://github.com/llvm/llvm-project/issues/63550) - clang: Assertion `VarSize == CstSize && "Emitted constant has unexpected size"' failed.
+- [63570](https://github.com/llvm/llvm-project/issues/63570) - `clangtk` crashes when processing a simple assignment loop wrapped by `#pragma omp unroll`
+- [69214](https://github.com/llvm/llvm-project/issues/69214) - [Clang][OpenMP] Assertion `IsRegistered && "private var already registered as private"' failed.
+- [69203](https://github.com/llvm/llvm-project/issues/69203) - clang: 18: continue to consume memory until OOM
+- [63004](https://github.com/llvm/llvm-project/issues/63004) - clangtk assertion failure: clang::QualType clang::FunctionProtoType::getParamType(unsigned int) const: Assertion `i < getNumParams() && "invalid parameter index"' failed.
+- [63518](https://github.com/llvm/llvm-project/issues/63518) - `clangtk` crashes at clang::Expr::IgnoreImpCasts
+- [63527](https://github.com/llvm/llvm-project/issues/63527) - `clangtk` crashes at clang::StmtVisitorBase<llvm::make\_const\_ptr, (anonymous namespace)::StmtProfiler, void>::Visit(clang::Stmt const\*)
+- [63567](https://github.com/llvm/llvm-project/issues/63567) - clang: Assertion `Diagnosed && "failed to diagnose bad conversion"' failed.
+- [63715](https://github.com/llvm/llvm-project/issues/63715) - `clang-17`: Assertion `false && "Unexpected unary operator!"' failed.
+- [69058](https://github.com/llvm/llvm-project/issues/69058) - clang: UNREACHABLE executed at /root/llvm-project/clang/lib/AST/ASTContext.cpp:10670!
+- [69064](https://github.com/llvm/llvm-project/issues/69064) - [Clang][OpenMP] Assertion `Diagnosed && "failed to diagnose bad conversion"' failed
+- [69065](https://github.com/llvm/llvm-project/issues/69065) - Assertion `Result.isAbsent() && "local created multiple times"' failed.
+- [69084](https://github.com/llvm/llvm-project/issues/69084) - clang: version 18: Assertion `getNumParams() == params.size() && "NumParams overflow!"' failed.
+- [69205](https://github.com/llvm/llvm-project/issues/69205) - clang: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+- [69208](https://github.com/llvm/llvm-project/issues/69208) - clang: 18: Crash at clang::Sema::AddAllocAlignAttr(clang::Decl\*, clang::AttributeCommonInfo const&, clang::Expr\*)
+- [69213](https://github.com/llvm/llvm-project/issues/69213) - clang: 18: Assertion `Init < getNumInits() && "Initializer access out of range!"' failed.
+- [69345](https://github.com/llvm/llvm-project/issues/69345) - clang: 18: Assertion `isStruct() && "Invalid accessor"' failed.
+- [69468](https://github.com/llvm/llvm-project/issues/69468) - clang: 18: Assertion `getType(Base)->isPointerType() || getType(Base)->isArrayType()' failed.
+- [69470](https://github.com/llvm/llvm-project/issues/69470) - clang: Assertion 'idx < size()' failed. In function `clang::Sema::tryCaptureVariable`
+- [69874](https://github.com/llvm/llvm-project/issues/69874) - clang: 18: Assertion `isLValue()' failed.
+- [86904](https://github.com/llvm/llvm-project/issues/86904) - [Clang][Crash] Assertion failure in Clang 18 when using pre-increment operator on `\_Complex double` struct fields
+- [86906](https://github.com/llvm/llvm-project/issues/86906) - [Clang][Crash] Clang-18 Assertion `iter->getSecond() >= 0 && "Found a negative number of references to a VarDecl"' failed.
+- [63520](https://github.com/llvm/llvm-project/issues/63520) - `clangtk`: Assertion `Block == Succ' failed.
+- [69472](https://github.com/llvm/llvm-project/issues/69472) - clang: 18: Assertion `E->getType()->isSpecificBuiltinType(BuiltinType::Overload)' failed.
+- [62711](https://github.com/llvm/llvm-project/issues/62711) - clang-15 crashes on \_\_builtin\_va\_arg
+- [63863](https://github.com/llvm/llvm-project/issues/63863) - `clang-17`: Assertion `Init->containsErrors() && "Dependent code should only occur in error-recovery path."' failed.
+- [69069](https://github.com/llvm/llvm-project/issues/69069) - [Clang][OpenMP] Assertion `detail::isPresent(Val) && "dyn\_cast on a non-existent value"' failed.
+- [69085](https://github.com/llvm/llvm-project/issues/69085) - [Clang][OpenMP] Assertion `!isNull() && "Cannot retrieve a NULL type pointer"' failed.
+- [69198](https://github.com/llvm/llvm-project/issues/69198) - [Clang][OpenMP] Assertion `OriginalTy->isArrayType()' failed.
+- [69200](https://github.com/llvm/llvm-project/issues/69200) - [Clang][OpenMP] Assertion `!isNull() && "Cannot retrieve a NULL type pointer"' failed.
+- [69352](https://github.com/llvm/llvm-project/issues/69352) - clang: Assertion `NumPositiveBits <= BestWidth && "How could an initializer get larger than ULL?"' failed.
+- [62829](https://github.com/llvm/llvm-project/issues/62829) - clang-15 hangs on a simple syntax error
+- [69194](https://github.com/llvm/llvm-project/issues/69194) - clang: 18: hangs on a simple syntax error
+- [62830](https://github.com/llvm/llvm-project/issues/62830) - clang-15 hangs on a valid program
+- [62834](https://github.com/llvm/llvm-project/issues/62834) - clang crashes on pointer qualified by \_\_seg\_gs when optimization is enabled
+- [63102](https://github.com/llvm/llvm-project/issues/63102) - clang-17 crashes at llvm::isPotentiallyReachable
+- [63762](https://github.com/llvm/llvm-project/issues/63762) - `clang-17`: Assertion `IterCnt++ < 1000 && "Iterative simplification didn't converge!"' failed.
+- [69211](https://github.com/llvm/llvm-project/issues/69211) - clang: 18: Assertion `ProcessedCount[V] < 100 && "Seem to have processed the same Value a lot"' failed.
+- [69059](https://github.com/llvm/llvm-project/issues/69059) - clang-18: Assertion `New->getType() == getType() && "replaceAllUses of value with new value of different type!"' failed.
+- [63304](https://github.com/llvm/llvm-project/issues/63304) - `clangtk` hangs when processing expression with deep dependency and type `intptr\_t`
+- [63307](https://github.com/llvm/llvm-project/issues/63307) - `clangtk` hangs when compiling a simple program that involves loading from or storing to array elements
+- [69090](https://github.com/llvm/llvm-project/issues/69090) - clang: 18: hangs with a short program in Polly's runIslScheduleOptimizer
+- [63305](https://github.com/llvm/llvm-project/issues/63305) - `clangtk` crashes at a large floating constant
+- [69218](https://github.com/llvm/llvm-project/issues/69218) - clang: trunk: crashes at clang::APValue::printPretty, Assertion `isa<ArrayType>(CanonicalType)' failed.
+
+### GCC
+
+- [110500](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110500) - gcc: internal compiler error: tree check: expected class 'type', have 'exceptional' (error\_mark) in c\_parser\_omp\_clause\_allocate
+- [110575](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110575) - gcc: internal compiler error: tree check: expected class 'type', have 'exceptional' (error\_mark) in build\_aligned\_type
+- [110603](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110603) - [14 Regression] GCC, ICE: internal compiler error: in verify\_range, at value-range.cc:1104 since r14-255
+- [110667](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110667) - gcc-14, ICE: internal compiler error: in replace\_reg, at reg-stack.cc:722
+- [110682](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110682) - [12/13/14/15 Regression] ICE: internal compiler error: in gimplify\_expr after error
+- [110693](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110693) - internal compiler error: Segmentation fault with invalid gimple
+- [110699](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110699) - [12/13/14 Regression] internal compiler error: tree check: expected array\_type, have error\_mark in array\_ref\_low\_bound, at tree.cc:12754
+- [110736](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110736) - gcc: internal compiler error: in change\_stack, at reg-stack.cc:2709
+- [110737](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110737) - GCC: internal compiler error: Segmentation fault when processing \_\_builtin\_isinf and \_Atomic long double together
+- [111809](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111809) - gimpleFE: unreferenced inline function with \_GIMPLE(ssa) definition causes ICE
+- [111810](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111810) - rtlFE: nested inline RTL function cause ICE
+- [111811](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111811) - [14/15 Regression] ICE with vector float bitfield after error
+- [111816](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111816) - [gimple FE] ICE with \_GIMPLE(ssa) and 2 returns
+- [111817](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111817) - ICE in expand\_asm\_stmt with invalid characters in inline-asm output operands
+- [111818](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111818) - [11 Regression] ICE with \_\_builtin\_memcpy with volatile and constants
+- [111819](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111819) - GCC: 14: internal compiler error: in fold\_offsetof, at c-family/c-common.cc:6877
+- [111820](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111820) - [13 Regression] Compiler time hog in the vectorizer with `-O3 -fno-tree-vrp`
+- [111821](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111821) - [11/12/13/14/15 Regression] OOM with packed struct and stack variable with copy
+- [111833](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111833) - [13/14 Regression] GCC: 14: hangs on a simple for loop
+- [111834](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111834) - GCC: 14: out of memory when \_\_builtin\_return\_address receive a large constant
+- [111836](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111836) - ICE with undefined types and undefined variables with \_GIMPLE and starting at ssa
+- [111855](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111855) - GCC: 14: internal compiler error: tree check: expected class 'type', have 'exceptional' (error\_mark) in useless\_type\_conversion\_p, at gimple-expr.cc:265
+- [111856](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111856) - ICE with return type of typedef of void and `#pragma omp declare simd`
+- [111862](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111862) - GCC: internal compiler error: tree check: expected class 'type', have 'exceptional' (error\_mark) in c\_parser\_omp\_clause\_reduction, at c/c-parser.cc:16234
+- [111865](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111865) - [11/12/13/14 Regression] ICE with register decl and extern decl with the same asm name
+- [111882](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111882) - [13 Regression] : internal compiler error: in get\_expr\_operand in ifcvt with Variable length arrays and bitfields inside a struct
+- [111911](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111911) - [11/12/13 Regression] ICE with integer overflow converting to \_Bool
+- [111912](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111912) - internal compile error when apply \_\_transaction\_atomic on logical or expr
+- [111913](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111913) - [14 Regression] ICE with \_\_builtin\_popcount(X) + \_\_builtin\_popcount(Y) simplification
+- [111914](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111914) - ICE with function pointer array as argument with non-constant size
+- [111915](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111915) - [14 Regression] ICE in vect with option `-O2 -fno-tree-vrp -fno-tree-dominator-opts -fno-tree-ccp` since r14-2117-gdd86a5a69cbda4
+- [111921](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111921) - [11/12/13/14/15 Regression] ICE with nested function after an error since r6-205-g5c4abbb8e80153
+- [111922](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111922) - [11/12/13/14 Regression] ICE in cp with -O2 -fno-tree-fre
+- [112487](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112487) - [11/12/13 Regression] ICE in setup\_one\_parameter with conflicting types
+- [112488](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112488) - [14 Regression] ICE in make\_ssa\_name\_fn with VLA inside type and inlining since r14-1142
+- [112489](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112489) - GCC: 14: internal compiler error: in check\_loop\_closed\_ssa\_def, at tree-ssa-loop-manip.cc:647
+- [112493](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112493) - [11/12/13/14/15 Regression] ICE in verify\_sra\_access\_forest with scalar\_storage\_order
+- [112494](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112494) - ICE in ix86\_cc\_mode, at config/i386/i386.cc:16477
+- [112495](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112495) - [11 Regression] ICE: verify\_gimple failed (after vectorizer) with named address space (\_\_seg\_gs )
+- [112496](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112496) - [13/14 Regression] ICE: in vectorizable_nonlinear_induction, at tree-vect-loop.cc with bit fields
+- [112499](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112499) - [11/12/13/14 Regression] ICE in output\_operand: invalid expression as operand with addition of 2 differences of address of labels
+- [112500](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112500) - GCC: 14: internal compiler error: in expand\_asm\_stmt, at cfgexpand.cc:3419
+- [112501](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112501) - ICE in extract\_insn, at recog.cc:2804 with \_\_builtin\_speculation\_safe\_value with short type on x86\_64
+- [112502](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112502) - GCC: 14: internal compiler error: in get\_predictor\_value, at predict.cc:2695
+- [112503](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112503) - GCC: 14: internal compiler error: Segmentation fault at gsi\_start\_edge(edge\_def\*)
+- [112504](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112504) - ICE in operand\_equal\_p, at fold-const.cc:3313 with function return struct containing an array and comparing the array to the same thing
+- [112505](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112505) - [11 Regression]  internal compiler error: in build\_vector\_from\_val, at tree.cc:2104 since r10-4076
+- [112509](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112509) - [14 Regression] internal compiler error: in verify\_range, at value-range.cc:1132
+- [112511](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112511) - ICE in type\_contains\_placeholder\_1: SRA vs \_BitInt
+- [112512](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112512) - ICE in lra\_split\_hard\_reg\_for, at lra-assigns.cc:1861 with using RAX as global register
+- [114203](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114203) - [13 Regression] Miscompilation: A possible miscompilation in GCC 13 and 14 with option -Os
+- [114206](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114206) - [11/12/13/14/15 Regression] recursive function call vs local variable addresses
+- [114207](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114207) - [12/13/14/15 Regression] modref gets confused by vecotorized code ` -O3 -fno-tree-forwprop` since r12-5439
