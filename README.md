@@ -1,18 +1,4 @@
-<p align="center">
-  <h1 align="center"><strong>MetaMut</strong></h1>
-</p>
-
-<p align="center">
-    <a href="https://semver.org" alt="Version">
-        <img src="https://img.shields.io/badge/release-v0.1.0-blue" />
-    </a>
-    <a href="https://google.github.io/styleguide/javaguide.html" alt="Code style">
-        <img src="https://img.shields.io/badge/style-Google-blue" />
-    </a>
-    <a href="https://opensource.org/licenses/MIT" alt="License">
-        <img src="https://img.shields.io/github/license/test-compiler/MetaMut" />
-    </a>
-</p>
+# MetaMut
 
 MetaMut is a generator to generate semantic aware mutators for testing C/C++ compilers.
 
