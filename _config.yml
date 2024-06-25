@@ -7,5 +7,8 @@ include:
   - README.md
   - README.ubuntu.md
   - bugs.md
+permissions:
+  id-token: write
+  pages: write
 
 theme: jekyll-theme-tactile
