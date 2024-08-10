@@ -60,8 +60,10 @@ bool MutatorManager::hasMutator(std::string name) {
 
 std::vector<std::string> MutatorManager::getAllMutators() {
   std::vector<std::string> mutators;
-  for (auto &kvpair : getMutatorsMap())
-    mutators.push_back(kvpair.first);
+  for (auto &kvpair : getMutatorsMap()) {
+    if (kvpair.first != "CorrectUndefinedBehavior")
+      mutators.push_back(kvpair.first);
+  }
   return mutators;
 }
 

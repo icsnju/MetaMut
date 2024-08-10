@@ -34,7 +34,7 @@ function(add_muss_executable name)
   set(multiValueArgs FILES INCLUDES INCLUDES_BEFORE DEPENDS OPTIONS)
   cmake_parse_arguments(OPT ""
     "${singleValueArgs}" "${multiValueArgs}" ${ARGV})
-  file(GLOB SOURCES ${OPT_FILES} "lib/*.cpp" "lib/*/*.cpp")
+  file(GLOB SOURCES ${OPT_FILES})
   add_executable(${name} ${SOURCES})
   target_include_directories(${name} PRIVATE include)
   target_link_libraries(${name} PRIVATE ${LINK_LIBS})
@@ -45,11 +45,22 @@ function(add_muss_executable name)
   if(DEFINED OPT_OPTIONS)
     target_compile_options(${name} PRIVATE ${OPT_OPTIONS})
   endif()
+  if(DEFINED OPT_DEPENDS)
+    target_link_libraries(${name} PRIVATE ${OPT_DEPENDS})
+  endif()
 endfunction()
 
+file(GLOB SOURCES SOURCES "lib/*.cpp" "lib/*/*.cpp")
+add_library(Driver STATIC main.cpp ${SOURCES})
+target_include_directories(Driver PRIVATE
+  . include ${LLVM_INCLUDE_DIRS})
+target_link_directories(Driver PRIVATE
+  ${LLVM_LIBRARY_DIRS})
+target_link_libraries(Driver PRIVATE ${LINK_LIBS})
+
 add_muss_executable(muss
-  FILES main.cpp "mu*/*.cpp" "mu*/*.cpp")
+  FILES "mu*/*.cpp" "mu*/*.cpp" DEPENDS Driver)
 add_muss_executable(mu.s
-  FILES main.cpp "mu.s/*.cpp" "mu.s/*.cpp")
+  FILES "mu.s/*.cpp" "mu.s/*.cpp" DEPENDS Driver)
 add_muss_executable(mu.u
-  FILES main.cpp "mu.u/*.cpp" "mu.u/*.cpp")
+  FILES "mu.u/*.cpp" "mu.u/*.cpp" DEPENDS Driver)

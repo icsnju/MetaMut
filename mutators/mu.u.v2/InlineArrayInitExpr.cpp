@@ -18,7 +18,7 @@ public:
   bool mutate() override {
     TraverseAST(getASTContext());
     if (TheArrayInitExprs.empty()) {
-      llvm::errs() << "InlineArrayInitExpr: No suitable array initialization found.\n";
+      // llvm::errs() << "InlineArrayInitExpr: No suitable array initialization found.\n";
       return false;
     }
 
