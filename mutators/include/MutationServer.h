@@ -229,7 +229,7 @@ public:
     shdata->task_req_mop = mop;
     shdata->task_res_success = false;
     sem_post(task_req);
-    if (wait_mutation(task_res, 10000)) {
+    if (wait_mutation(task_res, 1000)) {
       if (shdata->task_res_success) {
         logi("Succeeds for {}", mutators[mop]);
         return std::pair<MutationError, llvm::StringRef>{MutationError::Success,
