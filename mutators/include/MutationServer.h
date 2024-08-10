@@ -98,10 +98,14 @@ class MutationServer {
 
   std::vector<std::string> mutators;
 
+  static sem_t *&getUnfinishedSemaphore() {
+    static sem_t *sem;
+    return sem;
+  }
+
 public:
   MutationServer(std::vector<std::string> mutators)
       : mutators(std::move(mutators)) {
-
     shdata = (shared_data_t *)mmap(NULL, shm_size, PROT_READ | PROT_WRITE,
         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     fmtlog_assert(shdata, "failed to create shared memory");
@@ -164,8 +168,25 @@ public:
     shisrc->isrc_sz = sz;
   }
 
+  static void signalHandler(int signum) {
+    logi("Crash, sem={}", (void *)getUnfinishedSemaphore());
+    if (getUnfinishedSemaphore()) sem_post(getUnfinishedSemaphore());
+    _exit(signum);
+  }
+
   void client() {
     MutatorManager manager;
+    getUnfinishedSemaphore() = task_res;
+
+    struct sigaction sa;
+    sa.sa_handler = signalHandler;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+
+    // Handle segmentation fault and abort signals
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGABRT, &sa, NULL);
+
     while (true) {
       sem_wait(task_req);
       manager.srand(shdata->task_req_seed);
@@ -188,11 +209,11 @@ public:
 
     while (sem_trywait(sem) != 0) {
       int status = -1;
-      if (waitpid(client_pid, &status, WNOHANG) > 0)
-        if (WIFEXITED(status) || WIFSIGNALED(status)) {
-          logi("Child {} is terminated", client_pid);
-          return false;
-        }
+      waitpid(client_pid, &status, WNOHANG);
+      if (WIFEXITED(status) || WIFSIGNALED(status)) {
+        logi("Child {} is terminated", client_pid);
+        return false;
+      }
 
       if (getTimeInMS() > begin + milliseconds) {
         logi("Wait timeout {} vs {}", begin, getTimeInMS());
@@ -208,7 +229,7 @@ public:
     shdata->task_req_mop = mop;
     shdata->task_res_success = false;
     sem_post(task_req);
-    if (wait_mutation(task_res, 1000)) {
+    if (wait_mutation(task_res, 10000)) {
       if (shdata->task_res_success) {
         logi("Succeeds for {}", mutators[mop]);
         return std::pair<MutationError, llvm::StringRef>{MutationError::Success,
