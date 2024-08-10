@@ -1,0 +1,18 @@
+// RUN: mkdir -p %t.dir
+// RUN: %clang_analyze_cc1 -analyzer-output=html -analyzer-checker=core -o %t.dir %s
+// RUN: ls %t.dir | grep report
+// RUN: rm -fR %t.dir
+
+// This tests that we emit HTML diagnostics for reports that cross file boundaries.
+
+#define DEREF(p) *p = 0xDEADBEEF
+void has_bug(int *p) {
+  DEREF(p);
+}
+
+#define CALL_HAS_BUG(q) has_bug(q)
+
+void test_call_macro(void) {
+  CALL_HAS_BUG(0);
+}
+

@@ -1,0 +1,570 @@
+/* { dg-do run } */
+/* { dg-options "-O2 -fno-strict-aliasing -msse2" } */
+/* { dg-additional-options "-mno-mmx" { target { ! ia32 } } } */
+
+#include <stdlib.h>
+#include "cpuid.h"
+#include <stdio.h>
+#include <xmmintrin.h>
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(A) (sizeof (A) / sizeof ((A)[0]))
+#endif
+
+#ifdef __SSE2__
+#include <emmintrin.h>
+
+typedef union
+{
+  __m128i x;
+  char a[16];
+} union128i_b;
+
+typedef union
+{
+  __m128i x;
+  unsigned char a[16];
+} union128i_ub;
+
+typedef union
+{
+  __m128i x;
+  short a[8];
+} union128i_w;
+
+typedef union
+{
+  __m128i x;
+  unsigned short a[8];
+} union128i_uw;
+
+typedef union
+{
+  __m128i x;
+  int a[4];
+} union128i_d;
+
+typedef union
+{
+  __m128i x;
+  unsigned int a[4];
+} union128i_ud;
+
+typedef union
+{
+  __m128i x;
+  long long a[2];
+} union128i_q;
+
+typedef union
+{
+  __m128i x;
+  unsigned long long a[2];
+} union128i_uq;
+
+
+typedef union
+{
+  __m128d x;
+  double a[2];
+} union128d;
+#endif
+
+typedef union
+{
+  __m128  x;
+  float a[4];
+} union128;
+
+#ifdef DEBUG
+#define PRINTF printf
+#else
+#define PRINTF(...)	
+#endif
+
+#define CHECK_EXP(UNION_TYPE, VALUE_TYPE, FMT)		\
+static int						\
+__attribute__((noinline, unused))			\
+check_##UNION_TYPE (UNION_TYPE u, const VALUE_TYPE *v)	\
+{							\
+  int i;						\
+  int err = 0;						\
+							\
+  for (i = 0; i < ARRAY_SIZE (u.a); i++)		\
+    if (u.a[i] != v[i])					\
+      {							\
+	err++;						\
+	PRINTF ("%i: " FMT " != " FMT "\n",		\
+		i, v[i], u.a[i]);			\
+      }							\
+  return err;						\
+}
+
+#ifdef __SSE2__
+CHECK_EXP (union128i_b, char, "%d")
+CHECK_EXP (union128i_ub, unsigned char, "%d")
+CHECK_EXP (union128i_w, short, "%d")
+CHECK_EXP (union128i_uw, unsigned short, "%d")
+CHECK_EXP (union128i_d, int, "0x%x")
+CHECK_EXP (union128i_ud, unsigned int, "0x%x")
+CHECK_EXP (union128i_q, long long, "0x%llx")
+CHECK_EXP (union128i_uq, unsigned long long, "0x%llx")
+CHECK_EXP (union128d, double, "%f")
+#endif
+
+CHECK_EXP (union128, float, "%f")
+
+#ifndef ESP_FLOAT
+#define ESP_FLOAT 0.000001
+#endif
+#ifndef ESP_DOUBLE
+#define ESP_DOUBLE 0.000001
+#endif
+#define CHECK_ARRAY(ARRAY, TYPE, FMT)                   \
+static int                                              \
+__attribute__((noinline, unused))                       \
+checkV##ARRAY (const TYPE *v, const TYPE *e, int n)     \
+{                                                       \
+  int i;                                                \
+  int err = 0;                                          \
+                                                        \
+  for (i = 0; i < n; i++)                               \
+    if (v[i] != e[i])                                   \
+      {                                                 \
+        err++;                                          \
+        PRINTF ("%i: " FMT " != " FMT "\n",             \
+                i, v[i], e[i]);                 \
+      }                                                 \
+  return err;                                           \
+}
+
+CHECK_ARRAY(c, char, "0x%hhx")
+CHECK_ARRAY(s, short, "0x%hx")
+CHECK_ARRAY(i, int, "0x%x")
+CHECK_ARRAY(l, long long, "0x%llx")
+CHECK_ARRAY(uc, unsigned char, "0x%hhx")
+CHECK_ARRAY(us, unsigned short, "0x%hx")
+CHECK_ARRAY(ui, unsigned int, "0x%x")
+CHECK_ARRAY(ul, unsigned long long, "0x%llx")
+
+
+
+#define CHECK_FP_ARRAY(ARRAY, TYPE, ESP, FMT)                   \
+static int                                              \
+__attribute__((noinline, unused))                       \
+checkV##ARRAY (const TYPE *v, const TYPE *e, int n)     \
+{                                                       \
+  int i;                                                \
+  int err = 0;                                          \
+                                                        \
+  for (i = 0; i < n; i++)                               \
+    if (v[i] > (e[i] + (ESP)) || v[i] < (e[i] - (ESP))) \
+    if (e[i] != v[i])                                   \
+      {                                                 \
+        err++;                                          \
+        PRINTF ("%i: " FMT " != " FMT "\n",             \
+                i, v[i], e[i]);                 \
+      }                                                 \
+  return err;                                           \
+}
+
+CHECK_FP_ARRAY (d, double, ESP_DOUBLE, "%f")
+CHECK_FP_ARRAY (f, float, ESP_FLOAT, "%f")
+
+#ifdef NEED_IEEE754_FLOAT
+union ieee754_float
+{
+   float d;
+   struct 
+   {
+      unsigned long frac : 23;
+      unsigned exp : 8;
+      unsigned sign : 1;
+   } bits __attribute__((packed));
+};
+#endif
+
+#ifdef NEED_IEEE754_DOUBLE
+union ieee754_double
+{
+   double d;
+   struct 
+   {
+      unsigned long frac1 : 32;
+      unsigned long frac0 : 20;
+      unsigned exp : 11;
+      unsigned sign : 1;
+   } bits __attribute__((packed));
+};
+#endif
+
+#define CHECK_FP_EXP(UNION_TYPE, VALUE_TYPE, ESP, FMT)		\
+static int							\
+__attribute__((noinline, unused))				\
+check_fp_##UNION_TYPE (UNION_TYPE u, const VALUE_TYPE *v)	\
+{								\
+  int i;							\
+  int err = 0;							\
+								\
+  for (i = 0; i < ARRAY_SIZE (u.a); i++)			\
+    if (u.a[i] > (v[i] + (ESP)) || u.a[i] < (v[i] - (ESP)))	\
+      {								\
+	err++;							\
+	PRINTF ("%i: " FMT " != " FMT "\n",			\
+		i, v[i], u.a[i]);				\
+      }								\
+  return err;							\
+}
+
+CHECK_FP_EXP (union128, float, ESP_FLOAT, "%f")
+#ifdef __SSE2__
+CHECK_FP_EXP (union128d, double, ESP_DOUBLE, "%f")
+#endif
+/* Check if the OS supports executing SSE instructions.  */
+
+static int
+sse_os_support (void)
+{
+  /* All currently supported OSes do.  */
+  return 1;
+}
+
+static void sse2_test (void);
+
+static void
+__attribute__ ((noinline))
+do_test (void)
+{
+  sse2_test ();
+}
+
+int
+main ()
+{
+  unsigned int eax, ebx, ecx, edx;
+ 
+  if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
+    return 0;
+
+  /* Run SSE2 test only if host has SSE2 support.  */
+  if ((edx & bit_SSE2) && sse_os_support ())
+    do_test ();
+
+  return 0;
+}
+/* Routine to check correctness of the results */
+
+__attribute__((unused))
+static int
+saturate_b (int i)
+{
+  if (i > 127)
+    i = 127;
+  else if (i < -128)
+    i = -128;
+  return i;
+}
+
+__attribute__((unused))
+static int
+saturate_w (int i)
+{
+  if (i > 32767)
+    i = 32767;
+  else if (i < -32768)
+    i = -32768;
+  return i;
+}
+
+__attribute__((unused))
+static int
+saturate_ub (int i)
+{
+  if (i > 255)
+    i = 255;
+  else if (i < 0)
+    i = 0;
+  return i;
+}
+
+__attribute__((unused))
+static int
+saturate_uw (int i)
+{
+  if (i > 65535)
+    i = 65535;
+  else if (i < 0)
+    i = 0;
+  return i;
+}
+
+static long long MMXops[] =
+{
+  0x3467512347612976LL, 0x000000000000000eLL,
+  0x3467512347612976LL, 0x0000000000000014LL,
+  0x3467512347612976LL, 0x000000000000003cLL,
+  0x0000000000000000LL, 0xFFFFFFFFFFFFFFFFLL,
+  0xFFFFFFFFFFFFFFFFLL, 0x0000000000000000LL,
+  0x0000000000000001LL, 0x1000000000000000LL,
+  0x1000000000000000LL, 0x0000000000000001LL,
+  0xFF00FF00FF00FF00LL, 0x00FF00FF00FF00FFLL,
+  0xFFFFFFFFFFFFFFFFLL, 0x0101010101010101LL,
+  0x0101010101010101LL, 0xFFFFFFFFFFFFFFFFLL,
+  0x0123456789ABCDEFLL, 0x0123456789ABCDEFLL,
+  0x3467512347612976LL, 0x1839876340879234LL,
+  0x0000000000000000LL, 0x0000000000000000LL,
+  0xFFFFFFFFFFFFFFFFLL, 0xFFFFFFFFFFFFFFFFLL,
+  0x7F7F7F7F7F7F7F7FLL, 0x7F7F7F7F7F7F7F7FLL,
+  0x7F7F7F7F7F7F7F7FLL, 0x0101010101010101LL,
+  0x7F7F7F7F7F7F7F7FLL, 0x4782082349761237LL,
+  0x0000000000000000LL, 0x7F7F7F7F7F7F7F7FLL,
+  0x8080808080808080LL, 0x8080808080808080LL,
+  0x0101010101010101LL, 0x8080808080808080LL,
+  0x8080808080808080LL, 0x0000000000000000LL,
+  0x2372347120982458LL, 0x8080808080808080LL,
+  0xFFFFFFFFFFFFFFFFLL, 0x8080808080808080LL,
+  0x7F7F7F7F7F7F7F7FLL, 0xFFFFFFFFFFFFFFFFLL,
+  0x8080808080808080LL, 0x7F7F7F7F7F7F7F7FLL,
+  0xFFFFFFFFFFFFFFFFLL, 0x7F7F7F7F7F7F7F7FLL
+};
+
+#define MMX_num_ops (sizeof (MMXops) / sizeof (MMXops[0]))
+
+__attribute__((noinline, noclone))
+static void
+test_psllwi  (long long *ll1, unsigned int imm, long long *r)
+{
+  __m64 t1 = *(__m64 *) ll1;
+  switch (imm)
+    {
+    case 0:
+      *(__m64 *) r = _m_psllqi (t1, 0);
+      break;
+    case 1:
+      *(__m64 *) r = _m_psllqi (t1, 1);
+      break;
+    case 2:
+      *(__m64 *) r = _m_psllqi (t1, 2);
+      break;
+    case 3:
+      *(__m64 *) r = _m_psllqi (t1, 3);
+      break;
+    case 4:
+      *(__m64 *) r = _m_psllqi (t1, 4);
+      break;
+    case 5:
+      *(__m64 *) r = _m_psllqi (t1, 5);
+      break;
+    case 6:
+      *(__m64 *) r = _m_psllqi (t1, 6);
+      break;
+    case 7:
+      *(__m64 *) r = _m_psllqi (t1, 7);
+      break;
+    case 8:
+      *(__m64 *) r = _m_psllqi (t1, 8);
+      break;
+    case 9:
+      *(__m64 *) r = _m_psllqi (t1, 9);
+      break;
+    case 10:
+      *(__m64 *) r = _m_psllqi (t1, 10);
+      break;
+    case 11:
+      *(__m64 *) r = _m_psllqi (t1, 11);
+      break;
+    case 12:
+      *(__m64 *) r = _m_psllqi (t1, 12);
+      break;
+    case 13:
+      *(__m64 *) r = _m_psllqi (t1, 13);
+      break;
+    case 14:
+      *(__m64 *) r = _m_psllqi (t1, 14);
+      break;
+    case 15:
+      *(__m64 *) r = _m_psllqi (t1, 15);
+      break;
+    case 16:
+      *(__m64 *) r = _m_psllqi (t1, 16);
+      break;
+    case 17:
+      *(__m64 *) r = _m_psllqi (t1, 17);
+      break;
+    case 18:
+      *(__m64 *) r = _m_psllqi (t1, 18);
+      break;
+    case 19:
+      *(__m64 *) r = _m_psllqi (t1, 19);
+      break;
+    case 20:
+      *(__m64 *) r = _m_psllqi (t1, 20);
+      break;
+    case 21:
+      *(__m64 *) r = _m_psllqi (t1, 21);
+      break;
+    case 22:
+      *(__m64 *) r = _m_psllqi (t1, 22);
+      break;
+    case 23:
+      *(__m64 *) r = _m_psllqi (t1, 23);
+      break;
+    case 24:
+      *(__m64 *) r = _m_psllqi (t1, 24);
+      break;
+    case 25:
+      *(__m64 *) r = _m_psllqi (t1, 25);
+      break;
+    case 26:
+      *(__m64 *) r = _m_psllqi (t1, 26);
+      break;
+    case 27:
+      *(__m64 *) r = _m_psllqi (t1, 27);
+      break;
+    case 28:
+      *(__m64 *) r = _m_psllqi (t1, 28);
+      break;
+    case 29:
+      *(__m64 *) r = _m_psllqi (t1, 29);
+      break;
+    case 30:
+      *(__m64 *) r = _m_psllqi (t1, 30);
+      break;
+    case 31:
+      *(__m64 *) r = _m_psllqi (t1, 31);
+      break;
+    case 32:
+      *(__m64 *) r = _m_psllqi (t1, 32);
+      break;
+    case 33:
+      *(__m64 *) r = _m_psllqi (t1, 33);
+      break;
+    case 34:
+      *(__m64 *) r = _m_psllqi (t1, 34);
+      break;
+    case 35:
+      *(__m64 *) r = _m_psllqi (t1, 35);
+      break;
+    case 36:
+      *(__m64 *) r = _m_psllqi (t1, 36);
+      break;
+    case 37:
+      *(__m64 *) r = _m_psllqi (t1, 37);
+      break;
+    case 38:
+      *(__m64 *) r = _m_psllqi (t1, 38);
+      break;
+    case 39:
+      *(__m64 *) r = _m_psllqi (t1, 39);
+      break;
+    case 40:
+      *(__m64 *) r = _m_psllqi (t1, 40);
+      break;
+    case 41:
+      *(__m64 *) r = _m_psllqi (t1, 41);
+      break;
+    case 42:
+      *(__m64 *) r = _m_psllqi (t1, 42);
+      break;
+    case 43:
+      *(__m64 *) r = _m_psllqi (t1, 43);
+      break;
+    case 44:
+      *(__m64 *) r = _m_psllqi (t1, 44);
+      break;
+    case 45:
+      *(__m64 *) r = _m_psllqi (t1, 45);
+      break;
+    case 46:
+      *(__m64 *) r = _m_psllqi (t1, 46);
+      break;
+    case 47:
+      *(__m64 *) r = _m_psllqi (t1, 47);
+      break;
+    case 48:
+      *(__m64 *) r = _m_psllqi (t1, 48);
+      break;
+    case 49:
+      *(__m64 *) r = _m_psllqi (t1, 49);
+      break;
+    case 50:
+      *(__m64 *) r = _m_psllqi (t1, 50);
+      break;
+    case 51:
+      *(__m64 *) r = _m_psllqi (t1, 51);
+      break;
+    case 52:
+      *(__m64 *) r = _m_psllqi (t1, 52);
+      break;
+    case 53:
+      *(__m64 *) r = _m_psllqi (t1, 53);
+      break;
+    case 54:
+      *(__m64 *) r = _m_psllqi (t1, 54);
+      break;
+    case 55:
+      *(__m64 *) r = _m_psllqi (t1, 55);
+      break;
+    case 56:
+      *(__m64 *) r = _m_psllqi (t1, 56);
+      break;
+    case 57:
+      *(__m64 *) r = _m_psllqi (t1, 57);
+      break;
+    case 58:
+      *(__m64 *) r = _m_psllqi (t1, 58);
+      break;
+    case 59:
+      *(__m64 *) r = _m_psllqi (t1, 59);
+      break;
+    case 60:
+      *(__m64 *) r = _m_psllqi (t1, 60);
+      break;
+    case 61:
+      *(__m64 *) r = _m_psllqi (t1, 61);
+      break;
+    case 62:
+      *(__m64 *) r = _m_psllqi (t1, 62);
+      break;
+    case 63:
+      *(__m64 *) r = _m_psllqi (t1, 63);
+      break;
+    default:
+      *(__m64 *) r = _m_psllqi (t1, 64);
+      break;
+    }
+}
+
+/* Routine to manually compute the results */
+static void
+compute_correct_result (unsigned long long *src, unsigned int imm,
+			unsigned long long *res)
+{
+  int i;
+  if (imm > 63)
+    res[0] = 0;
+  else
+    res[0] = src[0] << imm;
+}
+
+static void
+sse2_test (void)
+{
+  int i;
+  unsigned int count;
+  long long r, ck;
+  int fail = 0;
+
+  /* Run the MMX tests */
+  for (i = 0; i < MMX_num_ops; i++)
+    {
+      count = MMXops[i];
+      test_psllwi (&MMXops[i], count, &r);
+      compute_correct_result (&MMXops[i], count, &ck);
+      if (ck != r)
+	  fail++;
+      }
+
+  if (fail != 0)
+    abort ();
+}

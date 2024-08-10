@@ -1,0 +1,87 @@
+/* { dg-do compile { target ia32 } } */
+/* { dg-options "-O2 -mbmi2" } */
+
+/* { dg-do run { target { bmi2 && ia32 } } } */
+/* { dg-options "-mbmi2 -O2" } */
+
+#include <x86intrin.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "cpuid.h"
+
+static void bmi2_test (void);
+
+static void
+__attribute__ ((noinline))
+do_test (void)
+{
+  bmi2_test ();
+}
+
+int
+main ()
+{
+  unsigned int eax, ebx, ecx, edx;
+
+  if (!__get_cpuid_count (7, 0, &eax, &ebx, &ecx, &edx))
+    return 0;
+
+  /* Run BMI2 test only if host has BMI2 support.  */
+  if (ebx & bit_BMI2)
+    {
+      do_test ();
+#ifdef DEBUG
+      printf ("PASSED\n");
+#endif
+      return 0;
+    }
+
+#ifdef DEBUG
+  printf ("SKIPPED\n");
+#endif
+  return 0;
+}
+
+__attribute__((noinline))
+unsigned long long
+calc_mul_u32 (unsigned volatile a, unsigned b)
+{
+  unsigned long long res = 0;
+  int i;
+  for (i = 0; i < b; ++i)
+    res += a;
+
+  return res;
+}
+
+__attribute__((noinline, regparm (2)))
+unsigned calc_mulx_u32 (unsigned x, unsigned y, unsigned *res_h)
+{
+  return (unsigned) _mulx_u32 (x, y, res_h);
+}
+
+static void
+bmi2_test ()
+{
+  unsigned i;
+  unsigned a = 0xce7ace0;
+  unsigned b = 0xfacefff;
+  unsigned res_l, res_h;
+  unsigned long long res, res_ref;
+
+  for (i = 0; i < 5; ++i) {
+    a = a * (i + 1);
+    b = b / (i + 1);
+
+    res_ref = calc_mul_u32 (a, b);
+    res_l = calc_mulx_u32 (a, b, &res_h);
+
+    res = ((unsigned long long) res_h << 32) | res_l;
+
+    if (res != res_ref)
+      abort();
+  }
+}
+
+/* { dg-final { scan-assembler-times "mulx\[ \\t\]+\[^\n\]*" 1 } } */

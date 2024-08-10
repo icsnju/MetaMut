@@ -1,0 +1,23 @@
+/* PR 24931 */
+/* { dg-do compile } */
+/* { dg-options "-O -Wuninitialized -ftrivial-auto-var-init=zero" } */
+/* PR 24931 */
+/* { dg-do compile } */
+/* { dg-options "-O -Wuninitialized" } */
+
+struct p {
+        short x, y;
+};
+
+struct s {
+        int i;
+        struct p p;
+};
+
+struct s f()
+{
+        struct s s;
+        s.p = (struct p){};
+        s.i = (s.p.x || s.p.y);
+        return s;
+}
