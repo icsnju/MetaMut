@@ -93,10 +93,9 @@ bash setup.sh
 **Seed Programs**:
 We also collect a large set of seeds (continuously update), you can retrieve them via:
 ```
-cd MetaMut/..
-git clone git@github.com:test-compiler/MetaMutAssets
-cd MetaMut
-ln -s ../MetaMutAssets/seeds .
+cd MetaMut/
+git pull origin assets:assets
+git checkout assets seeds
 ```
 
 After setting up compilers and seeds, run the fuzzer with the following commands:
