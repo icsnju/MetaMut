@@ -8,11 +8,18 @@ set -e
 : "${CC_OBJDIR:=$(pwd)/objects}"
 : "${JOBS:=4}"
 
+LLVM_CONFIG=$(which llvm-config)
+
+if ! [ -x $LLVM_CONFIG ]; then
+  echo -e "\033[1;31mCannot find an executable llvm-config"
+  exit 1
+fi
+
 # other variables
 PROJ_HOME=$(pwd)
 CFORGE_OBJDIR=${PROJ_HOME}/output
 INSTRUM_PATH=$PROJ_HOME/instrumenter/output/afl-bins
-LLVM_VERSION=$(llvm-config --version | grep -oE '([0-9]+)\.[0-9]+\.[0-9]+' | awk -F. '{print $1}')
+LLVM_VERSION=$($LLVM_CONFIG --version | grep -oE '([0-9]+)\.[0-9]+\.[0-9]+' | awk -F. '{print $1}')
 
 mkdir -p $CC_DWNDIR
 mkdir -p $CC_OBJDIR
