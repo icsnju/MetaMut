@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, "MetaMut");
   fmtlog::setLogFile(stderr);
   if (!opt::verbose) fmtlog::setLogLevel(fmtlog::OFF);
+  logi("Using seed {}", unsigned(opt::seed));
   get_rndgen().seed(opt::seed);
 
   if (opt::listMutators) {

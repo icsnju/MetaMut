@@ -8,7 +8,7 @@ Install the required packages using the following commands:
 sudo apt-get install gcc-11 g++-11 gcc-11-plugin-dev
 sudo apt-get install llvm-12 llvm-12-dev llvm-12-tools libllvm12 libclang-12-dev lld-12
 sudo apt-get install cmake gdb gcc g++ python3 python3-pip
-sudo apt-get install flex yacc bison
+sudo apt-get install flex yacc bison libdw-dev
 
 sudo pip3 install sysv_ipc numpy functools psutil
 sudo pip3 install tiktoken jinja2 openai

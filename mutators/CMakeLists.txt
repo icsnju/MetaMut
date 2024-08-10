@@ -6,6 +6,8 @@ include(cmake/find_llvm.cmake)
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
+option(DEBUG "enable debug information")
+
 set(LINK_LIBS
   clangTooling
   clangToolingASTDiff
@@ -42,6 +44,9 @@ function(add_muss_executable name)
     . ${LLVM_INCLUDE_DIRS})
   target_link_directories(${name} PRIVATE
     ${LLVM_LIBRARY_DIRS})
+  if (DEBUG)
+    target_compile_options(${name} PRIVATE -g -DBACKWARD_HAS_DW=1)
+  endif ()
   if(DEFINED OPT_OPTIONS)
     target_compile_options(${name} PRIVATE ${OPT_OPTIONS})
   endif()
@@ -52,11 +57,14 @@ endfunction()
 
 file(GLOB SOURCES SOURCES "lib/*.cpp" "lib/*/*.cpp")
 add_library(Driver STATIC main.cpp ${SOURCES})
+if (DEBUG)
+  target_compile_options(Driver PRIVATE -g -DBACKWARD_HAS_DW=1)
+endif ()
 target_include_directories(Driver PRIVATE
   . include ${LLVM_INCLUDE_DIRS})
 target_link_directories(Driver PRIVATE
   ${LLVM_LIBRARY_DIRS})
-target_link_libraries(Driver PRIVATE ${LINK_LIBS})
+target_link_libraries(Driver PRIVATE ${LINK_LIBS} dw)
 
 add_muss_executable(muss
   FILES "mu*/*.cpp" "mu*/*.cpp" DEPENDS Driver)

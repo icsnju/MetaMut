@@ -22,8 +22,15 @@
 
 #include "Mutator.h"
 #include "MutatorManager.h"
+#include "backward.h"
 #include "fmt/fmtlog.h"
 #include "utils.h"
+
+#include <llvm/Support/CommandLine.h>
+
+namespace opt {
+extern llvm::cl::opt<bool> verbose;
+}
 
 struct shared_data_t {
   int task_req_mop;
@@ -168,18 +175,21 @@ public:
     shisrc->isrc_sz = sz;
   }
 
-  static void signalHandler(int signum) {
+  static void signalHandler(int signo, siginfo_t *info, void *_ctx) {
     logi("Crash, sem={}", (void *)getUnfinishedSemaphore());
     if (getUnfinishedSemaphore()) sem_post(getUnfinishedSemaphore());
-    _exit(signum);
+    if (opt::verbose) backward::SignalHandling::handleSignal(signo, info, _ctx);
+    _exit(signo);
   }
 
   void client() {
     MutatorManager manager;
     getUnfinishedSemaphore() = task_res;
 
-    struct sigaction sa;
-    sa.sa_handler = signalHandler;
+    struct sigaction sa = {0};
+    sa.sa_flags =
+        static_cast<int>(SA_SIGINFO | SA_ONSTACK | SA_NODEFER | SA_RESETHAND);
+    sa.sa_sigaction = &signalHandler;
     sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
 
