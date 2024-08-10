@@ -33,6 +33,8 @@ extern llvm::cl::opt<bool> verbose;
 }
 
 struct shared_data_t {
+  bool is_crash;
+
   int task_req_mop;
   uint64_t task_req_seed;
 
@@ -51,6 +53,7 @@ struct shared_isrc_t {
 enum class MutationError {
   Success,
   Timeout,
+  Crash,
   Fail,
 };
 
@@ -105,9 +108,9 @@ class MutationServer {
 
   std::vector<std::string> mutators;
 
-  static sem_t *&getUnfinishedSemaphore() {
-    static sem_t *sem;
-    return sem;
+  static MutationServer *&getMutationInstance() {
+    static MutationServer *inst;
+    return inst;
   }
 
 public:
@@ -176,15 +179,20 @@ public:
   }
 
   static void signalHandler(int signo, siginfo_t *info, void *_ctx) {
-    logi("Crash, sem={}", (void *)getUnfinishedSemaphore());
-    if (getUnfinishedSemaphore()) sem_post(getUnfinishedSemaphore());
+    logi("Crash, inst={}", (void *)getMutationInstance());
+    // FIXME: inform the parent here is a crash
+    if (getMutationInstance()) {
+      if (getMutationInstance()->task_res)
+        sem_post(getMutationInstance()->task_res);
+      getMutationInstance()->shdata->is_crashed = true;
+    }
     if (opt::verbose) backward::SignalHandling::handleSignal(signo, info, _ctx);
     _exit(signo);
   }
 
   void client() {
     MutatorManager manager;
-    getUnfinishedSemaphore() = task_res;
+    getMutationInstance() = this;
 
     struct sigaction sa = {0};
     sa.sa_flags =
@@ -235,6 +243,7 @@ public:
 
   std::pair<MutationError, llvm::StringRef> apply_mutation(
       int mop, unsigned seed) {
+    shdata->is_crashed = false;
     shdata->task_req_seed = seed;
     shdata->task_req_mop = mop;
     shdata->task_res_success = false;
@@ -252,10 +261,13 @@ public:
     }
 
     // fails
-    logi("Timeout with {}", mutators[mop]);
     reset_mutation_server();
-    return std::pair<MutationError, llvm::StringRef>{
-        MutationError::Timeout, llvm::StringRef()};
+    if (shdata->is_crashed)
+      return std::pair<MutationError, llvm::StringRef>{
+          MutationError::Crash, llvm::StringRef()};
+    else
+      return std::pair<MutationError, llvm::StringRef>{
+          MutationError::Timeout, llvm::StringRef()};
   }
 };
 
