@@ -91,7 +91,9 @@ public:
   std::pair<MutationError, llvm::StringRef> apply_mutation(
       int mop, unsigned seed) {
     if (opt::debugMode) {
+      buffer.clear();
       llvm::raw_string_ostream oss(buffer);
+      logi("srand {}", seed);
       manager->srand(seed);
       manager->setOutStream(oss);
       manager->setMutator(mutators[mop]);
@@ -121,6 +123,8 @@ bool tryMutationWithMutators(
   state.push_back(
       json::object({{"entry", "record"}, {"seed", unsigned(opt::seed)}}));
 
+  // re-seed for consistency between two kinds of mutation
+  get_rndgen().seed(opt::seed);
   for (auto i = 0u; i < mutators.size(); i++) {
     MutationError error;
     llvm::StringRef output;

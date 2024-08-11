@@ -210,6 +210,7 @@ public:
 
     while (true) {
       sem_wait(task_req);
+      logi("srand {}", shdata->task_req_seed);
       manager.srand(shdata->task_req_seed);
 
       raw_buffer_ostream oss(shdata->osrc, shm_size - sizeof(shared_data_t));
