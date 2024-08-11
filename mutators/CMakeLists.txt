@@ -3,9 +3,6 @@ project(MUSS CXX C)
 include(cmake/string_to_list.cmake)
 include(cmake/find_llvm.cmake)
 
-set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++")
-
 option(DEBUG "enable debug information")
 
 set(LINK_LIBS
@@ -61,7 +58,7 @@ function(add_muss_library name)
   cmake_parse_arguments(OPT ""
     "${singleValueArgs}" "${multiValueArgs}" ${ARGV})
   file(GLOB SOURCES ${OPT_FILES})
-  add_library(${name} STATIC ${SOURCES})
+  add_library(${name} OBJECT ${SOURCES})
   target_include_directories(${name} PRIVATE include)
   target_link_libraries(${name} PRIVATE ${LINK_LIBS})
   target_include_directories(${name} PRIVATE
@@ -80,20 +77,20 @@ function(add_muss_library name)
 endfunction()
 
 add_muss_library(Driver FILES main.cpp "lib/*.cpp" "lib/*/*.cpp")
-add_muss_library(mu.s.lib FILES "mu.s/*.cpp" "mu.s/*.cpp")
-add_muss_library(mu.u.lib FILES "mu.u/*.cpp" "mu.u/*.cpp")
-add_muss_library(mu.u2.lib FILES "mu.u.v2/*.cpp" "mu.u.v2/*.cpp")
+add_muss_library(MuSLib FILES "mu.s/*.cpp" "mu.s/*.cpp")
+add_muss_library(MuULib FILES "mu.u/*.cpp" "mu.u/*.cpp")
+add_muss_library(MuU2Lib FILES "mu.u.v2/*.cpp" "mu.u.v2/*.cpp")
 
 file(WRITE ${CMAKE_BINARY_DIR}/dummy.cpp "")
 add_muss_executable(muss
   FILES ${CMAKE_BINARY_DIR}/dummy.cpp
-  DEPENDS Driver mu.s.lib mu.u.lib mu.u2.lib)
+  DEPENDS MuSLib MuULib MuU2Lib Driver)
 add_muss_executable(mu.s
   FILES ${CMAKE_BINARY_DIR}/dummy.cpp
-  DEPENDS Driver mu.s.lib)
+  DEPENDS MuSLib Driver)
 add_muss_executable(mu.u
   FILES ${CMAKE_BINARY_DIR}/dummy.cpp
-  DEPENDS Driver mu.u.lib)
+  DEPENDS MuULib Driver)
 add_muss_executable(mu.u2
   FILES ${CMAKE_BINARY_DIR}/dummy.cpp
-  DEPENDS Driver mu.u2.lib)
+  DEPENDS MuU2Lib Driver)
