@@ -61,6 +61,7 @@ const char *formatMutationError(MutationError err) {
   switch (err) {
   case MutationError::Success: return "success";
   case MutationError::Timeout: return "timeout";
+  case MutationError::Crash: return "crash";
   case MutationError::Fail: return "fail";
   }
   return "<null>";

@@ -93,7 +93,7 @@ bool tryMutationWithMutators(
     }
   }
   if (opt::printMutationState) llvm::errs() << state.dump(2) << "\n";
-  return false;
+  return true;
 }
 
 int main(int argc, char **argv) {
@@ -127,9 +127,9 @@ int main(int argc, char **argv) {
   if (opt::randomlyTryAllMutators) {
     auto mutators = MutatorManager::getAllMutators();
     std::shuffle(mutators.begin(), mutators.end(), get_rndgen());
-    return !tryMutationWithMutators(srctext, mutators);
+    tryMutationWithMutators(srctext, mutators);
   } else {
-    return !tryMutationWithMutators(srctext, splitString(opt::mutator, ','));
+    tryMutationWithMutators(srctext, splitString(opt::mutator, ','));
   }
-  return 1;
+  return 0;
 }
