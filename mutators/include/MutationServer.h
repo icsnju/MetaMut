@@ -30,6 +30,7 @@
 
 namespace opt {
 extern llvm::cl::opt<bool> verbose;
+extern llvm::cl::opt<bool> debugMode;
 }
 
 struct shared_data_t {
@@ -179,7 +180,7 @@ public:
     shisrc->isrc_sz = sz;
   }
 
-  static void signalHandler(int signo, siginfo_t *info, void *_ctx) {
+  static void signal_handler(int signo, siginfo_t *info, void *_ctx) {
     logi("Crash, inst={}", (void *)getMutationInstance());
     // FIXME: inform the parent here is a crash
     if (getMutationInstance()) {
@@ -199,7 +200,7 @@ public:
     struct sigaction sa = {0};
     sa.sa_flags =
         static_cast<int>(SA_SIGINFO | SA_ONSTACK | SA_NODEFER | SA_RESETHAND);
-    sa.sa_sigaction = &signalHandler;
+    sa.sa_sigaction = &signal_handler;
     sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
 

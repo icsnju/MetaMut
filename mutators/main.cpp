@@ -47,6 +47,10 @@ cl::opt<bool> printMutationState("print-mutations",
     cl::desc("Print each mutation's results"), cl::init(false),
     cl::cat(mutOpts));
 
+cl::opt<bool> debugMode("debug",
+    cl::desc("Enter debug mode, disabling some crash hardening features"),
+    cl::init(false), cl::cat(mutOpts));
+
 cl::opt<bool> randomlyTryAllMutators("randomly-try-all-mutators",
     cl::init(false), cl::desc("Try all specific mutators in specified order"),
     cl::cat(mutOpts));
@@ -61,12 +65,59 @@ std::vector<std::string> splitString(const std::string &str, char delimiter) {
   return slices;
 }
 
+class MutationProxy {
+  std::string buffer;
+  std::unique_ptr<MutationServer> server;
+  std::unique_ptr<MutatorManager> manager;
+  const std::vector<std::string> &mutators;
+
+public:
+  MutationProxy(const std::vector<std::string> &mutators) : mutators(mutators) {
+    if (opt::debugMode) {
+      manager.reset(new MutatorManager);
+    } else {
+      server.reset(new MutationServer(mutators));
+    }
+  }
+
+  void setup_isrc(llvm::StringRef isrc) {
+    if (opt::debugMode) {
+      manager->setSourceText(isrc.str());
+    } else {
+      server->setup_isrc(isrc);
+    }
+  }
+
+  std::pair<MutationError, llvm::StringRef> apply_mutation(
+      int mop, unsigned seed) {
+    if (opt::debugMode) {
+      llvm::raw_string_ostream oss(buffer);
+      manager->srand(seed);
+      manager->setOutStream(oss);
+      manager->setMutator(mutators[mop]);
+      bool success = manager->mutate();
+      oss.flush();
+      if (success) {
+        logi("Succeeds for {}", mutators[mop]);
+        return std::pair<MutationError, llvm::StringRef>{
+            MutationError::Success, llvm::StringRef(buffer)};
+      } else {
+        logi("Fails for {}", mutators[mop]);
+        return std::pair<MutationError, llvm::StringRef>{
+            MutationError::Fail, llvm::StringRef(buffer)};
+      }
+    } else {
+      return server->apply_mutation(mop, seed);
+    }
+  }
+};
+
 bool tryMutationWithMutators(
     llvm::StringRef srctext, const std::vector<std::string> &mutators) {
   json state = json::array();
-  MutationServer server(mutators);
+  MutationProxy proxy(mutators);
 
-  server.setup_isrc(srctext);
+  proxy.setup_isrc(srctext);
   state.push_back(
       json::object({{"entry", "record"}, {"seed", unsigned(opt::seed)}}));
 
@@ -74,7 +125,7 @@ bool tryMutationWithMutators(
     MutationError error;
     llvm::StringRef output;
     unsigned seed = get_rndgen()();
-    std::tie(error, output) = server.apply_mutation(i, seed);
+    std::tie(error, output) = proxy.apply_mutation(i, seed);
     bool changed = output.size() && output != srctext;
 
     state.push_back(
