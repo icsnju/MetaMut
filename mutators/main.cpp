@@ -98,7 +98,7 @@ bool tryMutationWithMutators(
 
 int main(int argc, char **argv) {
   llvm::cl::HideUnrelatedOptions(opt::mutOpts);
-  llvm::cl::ParseCommandLineOptions(argc, argv, "MetaMut");
+  llvm::cl::ParseCommandLineOptions(argc, argv, "muss");
   fmtlog::setLogFile(stderr);
   if (!opt::verbose) fmtlog::setLogLevel(fmtlog::OFF);
   logi("Using seed {}", unsigned(opt::seed));

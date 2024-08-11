@@ -184,7 +184,7 @@ public:
     if (getMutationInstance()) {
       if (getMutationInstance()->task_res)
         sem_post(getMutationInstance()->task_res);
-      getMutationInstance()->shdata->is_crashed = true;
+      getMutationInstance()->shdata->is_crash = true;
     }
     if (opt::verbose) backward::SignalHandling::handleSignal(signo, info, _ctx);
     _exit(signo);
@@ -193,6 +193,7 @@ public:
   void client() {
     MutatorManager manager;
     getMutationInstance() = this;
+    if (!opt::verbose) close(2);
 
     struct sigaction sa = {0};
     sa.sa_flags =
@@ -243,13 +244,17 @@ public:
 
   std::pair<MutationError, llvm::StringRef> apply_mutation(
       int mop, unsigned seed) {
-    shdata->is_crashed = false;
+    shdata->is_crash = false;
     shdata->task_req_seed = seed;
     shdata->task_req_mop = mop;
     shdata->task_res_success = false;
     sem_post(task_req);
     if (wait_mutation(task_res, 1000)) {
-      if (shdata->task_res_success) {
+      if (shdata->is_crash) {
+        logi("Crash with {}", mutators[mop]);
+        return std::pair<MutationError, llvm::StringRef>{
+            MutationError::Crash, llvm::StringRef()};
+      } else if (shdata->task_res_success) {
         logi("Succeeds for {}", mutators[mop]);
         return std::pair<MutationError, llvm::StringRef>{MutationError::Success,
             llvm::StringRef(shdata->osrc, shdata->osrc_sz)};
@@ -262,12 +267,9 @@ public:
 
     // fails
     reset_mutation_server();
-    if (shdata->is_crashed)
-      return std::pair<MutationError, llvm::StringRef>{
-          MutationError::Crash, llvm::StringRef()};
-    else
-      return std::pair<MutationError, llvm::StringRef>{
-          MutationError::Timeout, llvm::StringRef()};
+    assert (!shdata->is_crash);
+    return std::pair<MutationError, llvm::StringRef>{
+        MutationError::Timeout, llvm::StringRef()};
   }
 };
 
