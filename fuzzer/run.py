@@ -61,7 +61,7 @@ def check_context(args):
     print(f"The muss binary is not compiled, please refer to README to compile it")
     sys.exit(0)
 
-  if len(list(pathlib.Path(args.seeds_dir).glob('*.c'))) == 0:
+  if len(list(pathlib.Path(args.seeds_dir).glob('**/*.c'))) == 0:
     print(f"There are no seeds found in specified {args.seeds_dir}")
     sys.exit(0)
 

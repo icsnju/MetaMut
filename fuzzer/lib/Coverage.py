@@ -131,7 +131,7 @@ class CoverageSampler:
   env_var = '__AFL_BB_SHM_ID'
   def __init__(self, total_branches):
     self.total_branches = total_branches
-    self.shm = ShmObj(int(total_branches / 8 + 1))
+    self.shm = ShmObj(int((total_branches + 7) // 8))
     self.last_shmid = None
   def __enter__(self):
     if self.env_var in os.environ:
